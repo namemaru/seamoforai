@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEAMO Math Explorer · ทบทวนบทเรียนและแบบทดสอบสุ่ม ป.1–2</title>
+  <meta name="description" content="เว็บแอปทบทวนความรู้คณิตศาสตร์และแบบทดสอบสุ่ม 25 ข้อ SEAMO ป.1–2 (Paper A) พร้อมสื่ออินเทอร์แอคทีฟ เฉลยละเอียด และวิเคราะห์คะแนนรายหัวข้อ">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+    }
+    .topic-card {
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .topic-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -3px rgba(0, 0, 0, 0.05);
+    }
+    .opt-btn {
+      transition: all 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .opt-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+    .opt-btn:active:not(:disabled) {
+      transform: translateY(0) scale(0.98);
+    }
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.96) translateY(6px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop {
+      animation: popIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes bounceStar {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.22) rotate(8deg); }
+    }
+    .star-pop {
+      display: inline-block;
+      animation: bounceStar 0.45s ease;
+    }
+    .numpad-btn {
+      transition: transform 0.1s ease, background-color 0.15s ease;
+      user-select: none;
+    }
+    .numpad-btn:active {
+      transform: scale(0.95);
+    }
+    canvas#confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    @media print {
+      .no-print, header, footer, #confetti-canvas { display: none !important; }
+      body { background: #ffffff !important; color: #000000 !important; }
+      .qcard-print { break-inside: avoid; page-break-inside: avoid; border: 1px solid #cbd5e1 !important; margin-bottom: 12px !important; }
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased selection:bg-blue-500/20">
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-7">
+    <!-- Top Header & Main Mode Switcher -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 shadow-sm mb-6 space-y-4 no-print">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5 cursor-pointer" onclick="switchPortal('review'); go('home');">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+            🏆
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)]">
+                SEAMO Math Explorer
+              </h1>
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                Paper A · ป.1–2
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-[var(--muted-foreground)]">
+              ทบทวนบทเรียนอินเทอร์แอคทีฟ & แบบทดสอบสุ่ม 25 ข้อ · Grade 1–2
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="sound-btn" onclick="toggleSound()" title="เปิด/ปิดเสียง"
+            class="px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] text-sm font-medium flex items-center gap-1.5 transition">
+            <span id="sound-icon">🔊</span>
+            <span class="hidden sm:inline text-xs">เสียง</span>
+          </button>
+          <div id="lang-bar" class="inline-flex rounded-xl p-1 bg-[var(--background)] border border-[var(--border)]"></div>
+        </div>
+      </div>
+
+      <!-- Primary Portal Navigation Tabs -->
+      <div class="grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+        <button id="tab-review" onclick="switchPortal('review')"
+          class="py-2.5 px-4 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+          <span>📖</span>
+          <span id="tab-review-label">ทบทวนบทเรียน (7 หัวข้อ)</span>
+        </button>
+        <button id="tab-mock" onclick="switchPortal('mock')"
+          class="py-2.5 px-4 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition">
+          <span>🎲</span>
+          <span id="tab-mock-label">แบบทดสอบสุ่ม 25 ข้อ (100 คะแนน)</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main id="app" class="min-h-[480px]"></main>
+
+    <!-- Footer Disclaimer -->
+    <footer class="mt-10 pt-5 border-t border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] space-y-1 no-print">
+      <p>โจทย์และสื่อการสอนทั้งหมดสร้างขึ้นใหม่เพื่อการฝึกฝนตามแนวทาง SEAMO Paper A ไม่ใช่ข้อสอบจริง และไม่มีส่วนเกี่ยวข้องกับผู้จัดสอบ</p>
+      <p>All practice questions, interactive labs, and randomised tests are original educational items in the style of SEAMO Paper A.</p>
+    </footer>
+  </div>
+
+<script>
+/* ============================================================================
+   DEFAULT PORTAL TAB ('review' or 'mock')
+   ============================================================================ */
+var DEFAULT_PORTAL = 'review';
+var portal = DEFAULT_PORTAL; // 'review' | 'mock'
+var mode = 'both'; // 'th' | 'both' | 'en'
+
+/* ============================================================================
+   SOUND & CONFETTI ENGINE
+   ============================================================================ */
+var soundEnabled = true;
+var audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var now = audioCtx.currentTime;
+    if (type === 'correct') {
+      [523.25, 659.25, 783.99].forEach(function(freq, idx) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.11, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.24);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.25);
+      });
+    } else if (type === 'wrong') {
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.linearRampToValueAtTime(210, now + 0.22);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.26);
+    } else if (type === 'click') {
+      var osc2 = audioCtx.createOscillator();
+      var gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(600, now);
+      gain2.gain.setValueAtTime(0.04, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now);
+      osc2.stop(now + 0.06);
+    } else if (type === 'fanfare') {
+      [523.25, 659.25, 783.99, 1046.5].forEach(function(freq, idx) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+        gain.gain.setValueAtTime(0.13, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.1);
+        osc.stop(now + idx * 0.1 + 0.36);
+      });
+    }
+  } catch (e) {}
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+  if (soundEnabled) playSound('click');
+}
+
+function launchConfetti() {
+  var canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  var pieces = [];
+  var colors = ['#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#06B6D4'];
+  for (var i = 0; i < 70; i++) {
+    pieces.push({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 240,
+      y: canvas.height * 0.35,
+      vx: (Math.random() - 0.5) * 12,
+      vy: -Math.random() * 10 - 4,
+      size: Math.random() * 8 + 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      vrot: (Math.random() - 0.5) * 10
+    });
+  }
+  var frame = 0;
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var active = false;
+    pieces.forEach(function(p) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.32;
+      p.rot += p.vrot;
+      if (p.y < canvas.height + 20) active = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+      ctx.restore();
+    });
+    frame++;
+    if (active && frame < 140) requestAnimationFrame(tick);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ============================================================================
+   TRANSLATION & FORMATTING HELPERS
+   ============================================================================ */
+function S(th, en) { return { th: th, en: en }; }
+
+function T(o) {
+  if (typeof o === 'string') return o;
+  if (mode === 'th') return o.th;
+  if (mode === 'en') return o.en;
+  return '<span>' + o.th + '</span><span class="block text-xs sm:text-sm text-[var(--muted-foreground)] font-normal mt-0.5">' + o.en + '</span>';
+}
+
+function TInline(o) {
+  if (typeof o === 'string') return o;
+  if (mode === 'th') return o.th;
+  if (mode === 'en') return o.en;
+  return o.th + ' (' + o.en + ')';
+}
+
+function shuffle(a) {
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
+}
+
+function renderStars(n, max) {
+  var html = '<div class="inline-flex items-center gap-0.5">';
+  for (var i = 0; i < max; i++) {
+    var active = i < n;
+    html += '<span class="text-lg ' + (active ? 'text-amber-400 star-pop' : 'text-[var(--border)]') + '">' + (active ? '★' : '☆') + '</span>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ============================================================================
+   PART 1: TOPIC REVIEW CURRICULUM & INTERACTIVE LABS
+   ============================================================================ */
+var TOPICS = [
+  {
+    id: 'num',
+    ic: '🔢',
+    badge: 'Topic 1',
+    accent: '#2563EB',
+    bgSoft: 'rgba(37, 99, 235, 0.1)',
+    name: { th: 'จำนวนและค่าประจำหลัก', en: 'Numbers & Place Value' },
+    desc: { th: 'หลักสิบ หลักหน่วย การกระจายตัวเลข และการเปรียบเทียบจำนวน', en: 'Tens & ones, expanded form, and comparing 2-digit numbers' },
+    keyPoints: [
+      {
+        title: { th: '1. หลักสิบ และ หลักหน่วย', en: '1. Tens and Ones' },
+        body: {
+          th: 'เลขสองหลักประกอบด้วย <b>หลักสิบ (Tens)</b> อยู่ด้านซ้าย และ <b>หลักหน่วย (Ones)</b> อยู่ด้านขวา เช่น <b>47</b> คือ <b>4 สิบ</b> กับ <b>7 หน่วย</b> = 40 + 7',
+          en: 'A 2-digit number has <b>Tens</b> on the left and <b>Ones</b> on the right. For example, <b>47</b> = <b>4 tens</b> + <b>7 ones</b> = 40 + 7.'
+        }
+      },
+      {
+        title: { th: '2. เทคนิคการเปรียบเทียบจำนวน', en: '2. Comparing Numbers' },
+        body: {
+          th: 'ให้ดูที่ <b>หลักสิบก่อน</b> จำนวนที่มีหลักสิบมากกว่าจะมากกว่าทันที เช่น <b>58 &gt; 49</b> (เพราะ 5 สิบ &gt; 4 สิบ) ถ้าหลักสิบเท่ากันจึงค่อยดูหลักหน่วย',
+          en: 'Compare the <b>tens digit first</b>. <b>58 &gt; 49</b> because 5 tens is greater than 4 tens. If tens are equal, compare the ones.'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: 'เลข 36 มีกี่สิบ?', en: 'How many tens are in 36?' },
+        o: ['3', '6', '30', '36'],
+        a: 0,
+        hint: { th: 'ดูตัวเลขที่อยู่ข้างหน้า (หลักสิบ)', en: 'Look at the first digit on the left (the tens place).' },
+        e: { th: '36 = 3 สิบ กับ 6 หน่วย ดังนั้นจึงมี 3 สิบ', en: '36 = 3 tens and 6 ones, so there are 3 tens.' }
+      },
+      {
+        t: { th: 'จำนวนใดมีค่ามากที่สุด?', en: 'Which number is the greatest?' },
+        o: ['58', '85', '49', '76'],
+        a: 1,
+        hint: { th: 'เปรียบเทียบตัวเลขหลักสิบของทุกตัว: 5, 8, 4, 7', en: 'Compare the tens digits: 5, 8, 4, and 7.' },
+        e: { th: '85 มี 8 สิบ ซึ่งมากกว่า 7 สิบ, 5 สิบ และ 4 สิบ', en: '85 has 8 tens, which is the most.' }
+      },
+      {
+        t: { th: '5 สิบ กับ 8 หน่วย คือจำนวนใด?', en: '5 tens and 8 ones make which number?' },
+        o: ['58', '85', '13', '508'],
+        a: 0,
+        hint: { th: '5 สิบ = 50 นำมาบวกกับ 8 หน่วย', en: '5 tens = 50, then add 8 ones.' },
+        e: { th: '5 สิบ (50) + 8 หน่วย (8) = 58', en: '50 + 8 = 58.' }
+      },
+      {
+        t: { th: 'จำนวนใดอยู่ระหว่าง 69 กับ 71?', en: 'Which number is right between 69 and 71?' },
+        o: ['68', '70', '72', '79'],
+        a: 1,
+        hint: { th: 'นับต่อจาก 69 ไปอีก 1', en: 'Count 1 up from 69.' },
+        e: { th: 'เรียงลำดับได้ 69, 70, 71 ดังนั้นตัวเลขตรงกลางคือ 70', en: '69, 70, 71 — the middle number is 70.' }
+      },
+      {
+        t: { th: 'ใช้บัตรเลข 2 และ 7 สร้างเลขสองหลักที่มากที่สุดได้เท่าไร?', en: 'Using digits 2 and 7, what is the greatest 2-digit number you can make?' },
+        o: ['27', '72', '77', '9'],
+        a: 1,
+        hint: { th: 'วางเลขที่มีค่ามากกว่าไว้ที่หลักสิบ', en: 'Put the larger digit in the tens place.' },
+        e: { th: 'นำ 7 ไว้หลักสิบ และ 2 ไว้หลักหน่วย ได้ 72 ซึ่งมากกว่า 27', en: 'Putting 7 in the tens place gives 72, which is greater than 27.' }
+      }
+    ]
+  },
+  {
+    id: 'add',
+    ic: '➕',
+    badge: 'Topic 2',
+    accent: '#059669',
+    bgSoft: 'rgba(5, 150, 105, 0.1)',
+    name: { th: 'บวก ลบ คูณ หารพื้นฐาน', en: 'Operations (Add, Subtract & More)' },
+    desc: { th: 'เทคนิคบวกให้ครบสิบ (Make 10) ความสัมพันธ์บวก-ลบ และการแบ่งกลุ่มเท่าๆ กัน', en: 'Make-Ten strategy, fact families, equal groups, and sharing' },
+    keyPoints: [
+      {
+        title: { th: '1. เทคนิค "บวกให้ครบสิบ" (Make 10)', en: '1. The "Make 10" Strategy' },
+        body: {
+          th: 'เวลาบวกเลขอย่าง <b>8 + 5</b> ให้แบ่ง 5 เป็น <b>2 กับ 3</b> เพื่อนำ <b>8 + 2 = 10</b> ก่อน แล้วค่อยบวก 3 ได้ <b>13</b> คิดในใจได้ไวและไม่พลาด!',
+          en: 'To add <b>8 + 5</b>, split 5 into <b>2 and 3</b>. First make ten: <b>8 + 2 = 10</b>, then <b>10 + 3 = 13</b>!'
+        }
+      },
+      {
+        title: { th: '2. บวก-ลบคู่กัน และการซ้ำกลุ่ม', en: '2. Fact Families & Equal Groups' },
+        body: {
+          th: 'ถ้า <b>6 + 9 = 15</b> แล้ว <b>15 − 9 = 6</b> | ส่วนการมีของ 3 กล่อง กล่องละ 5 ชิ้น คือการบวกซ้ำ <b>5 + 5 + 5 = 15</b> (หรือ 3 × 5)',
+          en: 'If <b>6 + 9 = 15</b>, then <b>15 − 9 = 6</b>. And 3 boxes of 5 items = <b>5 + 5 + 5 = 15</b> (or 3 × 5).'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: '8 + 5 = ?', en: '8 + 5 = ?' },
+        o: ['12', '13', '14', '15'],
+        a: 1,
+        hint: { th: '8 ขาดอีก 2 จะครบ 10 (แยก 5 เป็น 2 กับ 3)', en: '8 needs 2 more to make 10 (split 5 into 2 and 3).' },
+        e: { th: '8 + 2 = 10 แล้วบวกอีก 3 ได้ 10 + 3 = 13', en: '8 + 2 = 10, and 10 + 3 = 13.' }
+      },
+      {
+        t: { th: '15 − 7 = ?', en: '15 − 7 = ?' },
+        o: ['7', '8', '9', '6'],
+        a: 1,
+        hint: { th: 'ลบออก 5 ให้เหลือ 10 ก่อน แล้วลบออกอีก 2', en: 'Subtract 5 to get 10 first, then subtract 2 more.' },
+        e: { th: '15 − 5 = 10 และ 10 − 2 = 8 (หรือคิดว่า 7 + 8 = 15)', en: '15 − 5 = 10, and 10 − 2 = 8.' }
+      },
+      {
+        t: { th: '6 + □ = 15 ตัวเลขในช่องว่างคือข้อใด?', en: '6 + □ = 15. What is the missing number?' },
+        o: ['8', '9', '10', '11'],
+        a: 1,
+        hint: { th: 'ใช้ความสัมพันธ์การลบ: 15 − 6 = ?', en: 'Use subtraction: 15 − 6 = ?' },
+        e: { th: 'หาได้จาก 15 − 6 = 9 (ตรวจคำตอบ: 6 + 9 = 15)', en: '15 − 6 = 9 (Check: 6 + 9 = 15).' }
+      },
+      {
+        t: { th: 'มีนกเกาะกิ่งไม้ 12 ตัว บินหนีไป 5 ตัว แล้วบินกลับมา 3 ตัว ตอนนี้มีนกกี่ตัว?', en: 'There are 12 birds. 5 fly away, then 3 come back. How many birds now?' },
+        o: ['9', '10', '11', '14'],
+        a: 1,
+        hint: { th: 'ทำทีละขั้น: 12 ลบ 5 ก่อน แล้วจึงบวก 3', en: 'Step by step: first 12 − 5, then add 3.' },
+        e: { th: 'ขั้นที่ 1: 12 − 5 = 7 ตัว | ขั้นที่ 2: 7 + 3 = 10 ตัว', en: 'Step 1: 12 − 5 = 7. Step 2: 7 + 3 = 10 birds.' }
+      },
+      {
+        t: { th: '9 + 4 + 1 = ?', en: '9 + 4 + 1 = ?' },
+        o: ['13', '14', '15', '16'],
+        a: 1,
+        hint: { th: 'จับคู่ตัวเลขที่บวกกันได้ครบ 10 ก่อน!', en: 'Pair the two numbers that make 10 first!' },
+        e: { th: 'จับคู่ 9 + 1 = 10 ก่อน แล้วบวก 4 ได้ 10 + 4 = 14', en: 'Pair 9 + 1 = 10 first, then 10 + 4 = 14.' }
+      }
+    ]
+  },
+  {
+    id: 'pat',
+    ic: '🧩',
+    badge: 'Topic 3',
+    accent: '#7C3AED',
+    bgSoft: 'rgba(124, 58, 237, 0.1)',
+    name: { th: 'แบบรูปและความสัมพันธ์', en: 'Patterns & Sequences' },
+    desc: { th: 'การหากฎของตัวเลขที่เพิ่มขึ้น ลดลง และแบบรูปที่ซ้ำกันเป็นชุด', en: 'Finding rules in growing, shrinking, and repeating patterns' },
+    keyPoints: [
+      {
+        title: { th: '1. แบบรูปเพิ่มทีละเท่าๆ กัน หรือลดทีละเท่าๆ กัน', en: '1. Constant Step Patterns' },
+        body: {
+          th: 'สังเกตว่าจากตัวหน้าไปตัวถัดไป <b>บวกเพิ่ม</b> หรือ <b>ลบออก</b> เท่าไร เช่น <b>3, 6, 9, 12, ?</b> เพิ่มทีละ 3 ดังนั้นตัวถัดไปคือ 12 + 3 = <b>15</b>',
+          en: 'Check how much is added or subtracted each step: <b>3, 6, 9, 12, ?</b> adds 3 each time, so 12 + 3 = <b>15</b>.'
+        }
+      },
+      {
+        title: { th: '2. แบบรูปที่ก้าวกระโดดเพิ่มขึ้น (+1, +2, +3, ...)', en: '2. Growing Gaps (+1, +2, +3, ...)' },
+        body: {
+          th: 'ในข้อสอบ SEAMO มักมีแบบรูปที่ระยะห่างเพิ่มขึ้นทีละ 1 เช่น <b>1, 2, 4, 7, 11, ?</b> มีผลต่างคือ +1, +2, +3, +4 ก้าวต่อไปต้อง <b>+5</b> ได้ <b>16</b>',
+          en: 'SEAMO loves growing gaps! In <b>1, 2, 4, 7, 11, ?</b> the jumps are +1, +2, +3, +4, so the next jump is <b>+5</b> → <b>16</b>.'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: '5, 10, 15, 20, ? ตัวเลขถัดไปคือข้อใด', en: '5, 10, 15, 20, ? What number comes next?' },
+        o: ['24', '25', '30', '35'],
+        a: 1,
+        hint: { th: 'นับเพิ่มทีละ 5', en: 'Count up by 5s.' },
+        e: { th: 'แบบรูปบวกเพิ่มทีละ 5 ดังนั้น 20 + 5 = 25', en: 'Add 5 each time: 20 + 5 = 25.' }
+      },
+      {
+        t: { th: '20, 18, 16, 14, ? ตัวเลขถัดไปคือข้อใด', en: '20, 18, 16, 14, ? What comes next?' },
+        o: ['10', '12', '13', '11'],
+        a: 1,
+        hint: { th: 'ตัวเลขลดลงทีละเท่าไร?', en: 'How much does the number decrease each time?' },
+        e: { th: 'ลบทีละ 2 ดังนั้น 14 − 2 = 12', en: 'Subtract 2 each time: 14 − 2 = 12.' }
+      },
+      {
+        t: { th: 'A , B , B , A , B , B , A , B , ? ตัวถัดไปคืออะไร?', en: 'A , B , B , A , B , B , A , B , ? What comes next?' },
+        o: ['A', 'B', 'C', 'AB'],
+        a: 1,
+        hint: { th: 'แบ่งกลุ่มทีละ 3 ตัว: (A B B) (A B B) ...', en: 'Group the letters in sets of three: (A B B) (A B B)...' },
+        e: { th: 'แบบรูปซ้ำชุดละ 3 ตัวคือ [A B B] ตอนนี้อยู่ที่ A B จึงต้องตามด้วย B อีกตัว', en: 'The repeating unit is [A B B]. After A B comes the second B.' }
+      },
+      {
+        t: { th: '1, 2, 4, 7, 11, ? ตัวเลขถัดไปคือข้อใด', en: '1, 2, 4, 7, 11, ? What comes next?' },
+        o: ['15', '16', '17', '18'],
+        a: 1,
+        hint: { th: 'เขียนผลต่างด้านบน: +1, +2, +3, +4, ...', en: 'Look at the differences between terms: +1, +2, +3, +4...' },
+        e: { th: 'ผลต่างเพิ่มขึ้นทีละขั้น: +1, +2, +3, +4 ขั้นต่อไปคือ +5 ดังนั้น 11 + 5 = 16', en: 'The gaps are +1, +2, +3, +4. Next gap is +5 → 11 + 5 = 16.' }
+      },
+      {
+        t: { th: '🔴 🔵 🟢 🔴 🔵 🟢 🔴 ? รูปถัดไปคือสีอะไร?', en: '🔴 🔵 🟢 🔴 🔵 🟢 🔴 ? Which color comes next?' },
+        o: ['🔴 แดง (Red)', '🔵 น้ำเงิน (Blue)', '🟢 เขียว (Green)', '🟡 เหลือง (Yellow)'],
+        a: 1,
+        hint: { th: 'เรียงซ้ำ แดง → น้ำเงิน → เขียว', en: 'Repeats Red → Blue → Green.' },
+        e: { th: 'ชุดที่ซ้ำคือ (🔴 🔵 🟢) หลังสีแดง 🔴 จึงเป็นสีน้ำเงิน 🔵', en: 'The pattern is (🔴 🔵 🟢). Right after Red 🔴 is Blue 🔵.' }
+      }
+    ]
+  },
+  {
+    id: 'shape',
+    ic: '🔷',
+    badge: 'Topic 4',
+    accent: '#D97706',
+    bgSoft: 'rgba(217, 119, 6, 0.1)',
+    name: { th: 'รูปทรงเรขาคณิต', en: 'Shapes & Geometry' },
+    desc: { th: 'การนับด้าน มุม ความยาวรอบรูป และหน้า/ขอบของลูกบาศก์ 3 มิติ', en: 'Sides, corners, perimeter, and faces/edges of 3D cubes' },
+    keyPoints: [
+      {
+        title: { th: '1. รูปเรขาคณิต 2 มิติ (ด้าน และ มุม)', en: '1. 2D Shapes (Sides & Corners)' },
+        body: {
+          th: '• <b>สามเหลี่ยม (Triangle)</b>: 3 ด้าน 3 มุม<br>• <b>สี่เหลี่ยมจัตุรัส / ผืนผ้า (Square / Rectangle)</b>: 4 ด้าน 4 มุม<br>• <b>วงกลม (Circle)</b>: เส้นโค้งเรียบ 0 ด้าน 0 มุม',
+          en: '• <b>Triangle</b>: 3 sides, 3 corners<br>• <b>Square / Rectangle</b>: 4 sides, 4 corners<br>• <b>Circle</b>: 0 straight sides, 0 corners'
+        }
+      },
+      {
+        title: { th: '2. รูปทรง 3 มิติ: ลูกบาศก์ (Cube)', en: '2. 3D Shape: The Cube' },
+        body: {
+          th: 'ลูกบาศก์ 1 ลูก มี <b>6 หน้า (Faces)</b>, <b>8 มุม (Vertices)</b> และ <b>12 ขอบ/เส้นสัน (Edges)</b>',
+          en: 'One cube has <b>6 flat faces</b>, <b>8 corners</b>, and <b>12 straight edges</b>.'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: 'รูปสามเหลี่ยมมีทั้งหมดกี่มุม?', en: 'How many corners does a triangle have?' },
+        o: ['2', '3', '4', '5'],
+        a: 1,
+        hint: { th: 'ชื่อ "สาม" เหลี่ยม บอกจำนวนมุมและด้าน', en: '"Tri-" means three!' },
+        e: { th: 'รูปสามเหลี่ยมมี 3 ด้าน และ 3 มุม', en: 'A triangle has 3 sides and 3 corners.' }
+      },
+      {
+        t: { th: 'ลูกบาศก์ (เช่น ลูกเต๋า) มีทั้งหมดกี่หน้า?', en: 'How many flat faces does a cube have?' },
+        o: ['4', '6', '8', '12'],
+        a: 1,
+        hint: { th: 'นึกถึงลูกเต๋าที่มีแต้ม 1 ถึง 6', en: 'Think of a standard numbered die (1 to 6).' },
+        e: { th: 'มี 6 หน้า คือ บน ล่าง หน้า หลัง ซ้าย ขวา', en: 'Top, bottom, front, back, left, right = 6 faces.' }
+      },
+      {
+        t: { th: 'สี่เหลี่ยมผืนผ้ามีทั้งหมดกี่ด้าน?', en: 'How many sides does a rectangle have?' },
+        o: ['2', '3', '4', '6'],
+        a: 2,
+        hint: { th: 'มีด้านยาว 2 ด้าน และด้านสั้น 2 ด้าน', en: 'It has 2 long sides and 2 short sides.' },
+        e: { th: 'ด้านยาว 2 ด้าน + ด้านกว้าง 2 ด้าน รวมเป็น 4 ด้าน', en: '2 long sides + 2 short sides = 4 sides.' }
+      },
+      {
+        t: { th: 'สี่เหลี่ยมจัตุรัส 2 รูป ที่วางแยกกัน มีมุมรวมกันทั้งหมดกี่มุม?', en: 'How many corners do 2 separate squares have altogether?' },
+        o: ['4', '6', '8', '16'],
+        a: 2,
+        hint: { th: 'สี่เหลี่ยม 1 รูปมี 4 มุม ถ้ารวม 2 รูปจะได้...', en: '1 square has 4 corners. Add two of them!' },
+        e: { th: 'รูปละ 4 มุม มี 2 รูป จึงรวมเป็น 4 + 4 = 8 มุม', en: '4 + 4 = 8 corners altogether.' }
+      },
+      {
+        t: { th: 'สามเหลี่ยม 1 รูป กับ วงกลม 1 รูป มีมุมรวมกันกี่มุม?', en: '1 triangle and 1 circle have how many corners altogether?' },
+        o: ['0', '3', '4', '6'],
+        a: 1,
+        hint: { th: 'วงกลมมีมุมหรือไม่?', en: 'Does a circle have any corners?' },
+        e: { th: 'สามเหลี่ยมมี 3 มุม ส่วนวงกลมมี 0 มุม รวมกันได้ 3 + 0 = 3 มุม', en: 'A triangle has 3 corners and a circle has 0 corners: 3 + 0 = 3.' }
+      }
+    ]
+  },
+  {
+    id: 'time',
+    ic: '⏰',
+    badge: 'Topic 5',
+    accent: '#E11D48',
+    bgSoft: 'rgba(225, 29, 72, 0.1)',
+    name: { th: 'เวลาและเงิน', en: 'Time & Money' },
+    desc: { th: 'การอ่านเวลาเป็นชั่วโมง นาที สัปดาห์ และการรวมเหรียญ-ทอนเงิน', en: 'Hours, minutes, elapsed time, counting coins, and finding change' },
+    keyPoints: [
+      {
+        title: { th: '1. เรื่องของเวลาที่ต้องจำ', en: '1. Key Time Facts' },
+        body: {
+          th: '• <b>1 ชั่วโมง = 60 นาที</b><br>• <b>1 สัปดาห์ = 7 วัน</b><br>• เวลาสิ้นสุด = เวลาเริ่มต้น + จำนวนชั่วโมงที่ใช้ไป',
+          en: '• <b>1 hour = 60 minutes</b><br>• <b>1 week = 7 days</b><br>• End time = Start time + Duration'
+        }
+      },
+      {
+        title: { th: '2. การนับเหรียญและคิดเงินทอน', en: '2. Counting Coins & Change' },
+        body: {
+          th: 'เหรียญไทยที่ใช้บ่อยมี <b>1, 2, 5, 10 บาท</b> เวลารวมเหรียญให้นับเหรียญที่มีค่ามากก่อน และ <b>เงินทอน = เงินที่จ่าย − ราคาสินค้า</b>',
+          en: 'Common Thai coins: <b>1, 2, 5, 10 baht</b>. Add larger coins first! <b>Change = Money Paid − Price</b>.'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: 'เริ่มเรียนเวลา 9:00 น. เรียนนาน 2 ชั่วโมง จะเลิกเรียนเวลาใด?', en: 'Class starts at 9:00 and lasts 2 hours. When does it end?' },
+        o: ['10:00', '11:00', '12:00', '2:00'],
+        a: 1,
+        hint: { th: 'นับต่อจาก 9 โมงไปอีก 2 ชั่วโมง', en: 'Add 2 hours to 9 o’clock.' },
+        e: { th: '9 + 2 = 11 ดังนั้นเลิกเรียนเวลา 11:00 น.', en: '9 + 2 = 11, so class ends at 11:00.' }
+      },
+      {
+        t: { th: 'มีเหรียญ 5 บาทสองเหรียญ เหรียญ 2 บาทหนึ่งเหรียญ และเหรียญ 1 บาทหนึ่งเหรียญ รวมเป็นกี่บาท?', en: 'Coins of 5, 5, 2, and 1 baht make how many baht in total?' },
+        o: ['12', '13', '14', '15'],
+        a: 1,
+        hint: { th: 'รวมเหรียญ 5 + 5 ให้ได้ 10 ก่อน!', en: 'Combine 5 + 5 = 10 first!' },
+        e: { th: '5 + 5 = 10 บาท บวกอีก 2 + 1 = 3 บาท รวมเป็น 13 บาท', en: '5 + 5 = 10, plus 2 + 1 = 13 baht.' }
+      },
+      {
+        t: { th: 'ซื้อปากการาคา 8 บาท จ่ายด้วยเหรียญ 10 บาท จะได้รับเงินทอนกี่บาท?', en: 'A pen costs 8 baht. You pay 10 baht. What is the change?' },
+        o: ['1', '2', '3', '18'],
+        a: 1,
+        hint: { th: 'เงินทอน = เงินที่จ่าย (10) − ราคาของ (8)', en: 'Change = Paid (10) − Cost (8).' },
+        e: { th: '10 − 8 = 2 บาท', en: '10 − 8 = 2 baht.' }
+      },
+      {
+        t: { th: 'เวลา 1 ชั่วโมง มีทั้งหมดกี่นาที?', en: 'How many minutes are in 1 hour?' },
+        o: ['30', '50', '60', '100'],
+        a: 2,
+        hint: { th: 'เข็มยาวเดินครบ 1 รอบหน้าปัดนาฬิกา (12 ช่อง ช่องละ 5 นาที)', en: 'The minute hand goes all the way around the clock: 60 minutes.' },
+        e: { th: '1 ชั่วโมง มี 60 นาที', en: '1 hour = 60 minutes.' }
+      },
+      {
+        t: { th: '2 สัปดาห์ มีทั้งหมดกี่วัน?', en: 'How many days are there in 2 weeks?' },
+        o: ['7', '10', '12', '14'],
+        a: 3,
+        hint: { th: '1 สัปดาห์มี 7 วัน ถ้า 2 สัปดาห์ก็นำ 7 + 7', en: '1 week = 7 days, so 2 weeks = 7 + 7.' },
+        e: { th: '7 + 7 = 14 วัน', en: '7 + 7 = 14 days.' }
+      }
+    ]
+  },
+  {
+    id: 'meas',
+    ic: '📏',
+    badge: 'Topic 6',
+    accent: '#0891B2',
+    bgSoft: 'rgba(8, 145, 178, 0.1)',
+    name: { th: 'การวัด ความยาว น้ำหนัก ปริมาตร', en: 'Measurement (cm, kg, L)' },
+    desc: { th: 'การเปรียบเทียบความยาว (cm) น้ำหนัก (kg) และความจุเป็นลิตร (L)', en: 'Comparing length in cm, weight in kg, and volume in litres' },
+    keyPoints: [
+      {
+        title: { th: '1. หน่วยการวัดพื้นฐาน', en: '1. Standard Units' },
+        body: {
+          th: '• ความยาว: <b>เซนติเมตร (cm)</b> หรือ <b>เมตร (m)</b><br>• น้ำหนัก: <b>กิโลกรัม (kg)</b><br>• ปริมาตร/ความจุ: <b>ลิตร (L)</b>',
+          en: '• Length: <b>centimetres (cm)</b><br>• Weight: <b>kilograms (kg)</b><br>• Volume: <b>litres (L)</b>'
+        }
+      },
+      {
+        title: { th: '2. ข้อควรระวังเรื่องน้ำหนัก!', en: '2. Watch Out for Weight Traps!' },
+        body: {
+          th: 'สิ่งของคนละชนิดกัน ถ้ามีน้ำหนักระบุเป็นตัวเลขและหน่วยเท่ากัน เช่น <b>ข้าวสาร 1 kg</b> กับ <b>นุ่น 1 kg</b> ย่อมมีน้ำหนัก <b>เท่ากันพอดี!</b>',
+          en: '<b>1 kg of rice</b> and <b>1 kg of cotton</b> weigh the <b>exact same</b> (1 kg each)!'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: 'ริบบิ้น A ยาว 12 cm ริบบิ้น B ยาว 9 cm ริบบิ้น A ยาวกว่า B กี่ cm?', en: 'Ribbon A is 12 cm, Ribbon B is 9 cm. How much longer is A than B?' },
+        o: ['2', '3', '4', '21'],
+        a: 1,
+        hint: { th: 'หาความต่างให้นำมาลบกัน: 12 − 9', en: 'Find the difference: 12 − 9.' },
+        e: { th: '12 − 9 = 3 เซนติเมตร (cm)', en: '12 − 9 = 3 cm.' }
+      },
+      {
+        t: { th: 'ข้าวสารหนัก 1 kg กับ นุ่นฟูๆ หนัก 1 kg สิ่งใดหนักกว่ากัน?', en: '1 kg of rice vs. 1 kg of fluffy cotton. Which is heavier?' },
+        o: [
+          { th: 'ข้าวสาร', en: 'Rice' },
+          { th: 'นุ่น', en: 'Cotton' },
+          { th: 'หนักเท่ากัน', en: 'Same weight' },
+          { th: 'บอกไม่ได้', en: 'Cannot tell' }
+        ],
+        a: 2,
+        hint: { th: 'ดูที่ตัวเลขน้ำหนักของทั้งสองอย่าง (1 kg กับ 1 kg)', en: 'Look at the given weight of both items: 1 kg and 1 kg.' },
+        e: { th: 'ทั้งสองอย่างมีน้ำหนัก 1 กิโลกรัม (1 kg) เท่ากันพอดี!', en: 'Both weigh 1 kg, so they have the exact same weight!' }
+      },
+      {
+        t: { th: 'ดินสอยาวแท่งละ 7 cm นำมาวางต่อกัน 2 แท่ง จะยาวรวมกันกี่ cm?', en: 'Two 7 cm pencils are placed end to end. How long in total?' },
+        o: ['9', '12', '14', '49'],
+        a: 2,
+        hint: { th: 'วางต่อกันให้นำความยาวมาบวกกัน', en: 'Placed end-to-end means we add their lengths: 7 + 7.' },
+        e: { th: '7 + 7 = 14 เซนติเมตร (cm)', en: '7 + 7 = 14 cm.' }
+      },
+      {
+        t: { th: 'ขวดน้ำจุขวดละ 2 ลิตร ถ้ามี 3 ขวด จะจุน้ำรวมกันกี่ลิตร?', en: 'Each bottle holds 2 litres. How many litres in 3 bottles?' },
+        o: ['5', '6', '8', '23'],
+        a: 1,
+        hint: { th: 'บวก 2 ซ้ำกัน 3 ครั้ง: 2 + 2 + 2', en: 'Add 2 three times: 2 + 2 + 2.' },
+        e: { th: '2 + 2 + 2 = 6 ลิตร', en: '2 + 2 + 2 = 6 litres.' }
+      },
+      {
+        t: { th: 'เชือกยาว 15 cm ตัดออกไปใช้ 6 cm เหลือเชือกยาวกี่ cm?', en: 'A 15 cm rope has 6 cm cut off. How much rope is left?' },
+        o: ['8', '9', '10', '21'],
+        a: 1,
+        hint: { th: 'ตัดออก คือการลบ: 15 − 6', en: 'Cutting off means subtract: 15 − 6.' },
+        e: { th: '15 − 6 = 9 เซนติเมตร (cm)', en: '15 − 6 = 9 cm.' }
+      }
+    ]
+  },
+  {
+    id: 'logic',
+    ic: '💡',
+    badge: 'Topic 7',
+    accent: '#EA580C',
+    bgSoft: 'rgba(234, 88, 12, 0.1)',
+    name: { th: 'โจทย์ปัญหาและตรรกะ SEAMO', en: 'Word Problems & Logic' },
+    desc: { th: 'การเข้าแถว การเปรียบเทียบมากกว่า/น้อยกว่า เลขคู่-เลขคี่ และการนับขา/การจับมือ', en: 'Queue problems, comparisons, odd/even, animal legs, and handshakes' },
+    keyPoints: [
+      {
+        title: { th: '1. โจทย์การเข้าแถว (Queue Problems)', en: '1. Queue / Line-Up Problems' },
+        body: {
+          th: 'วาดวงกลมแทนคนเสมอ! เช่น "แอนยืนเป็นคนที่ 3 จากหัวแถว (มีคนหน้าแอน 2 คน) และมีคนอยู่ข้างหลังแอน 2 คน" รวมทั้งแถว = <b>2 (หน้า) + 1 (แอน) + 2 (หลัง) = 5 คน</b>',
+          en: 'Draw circles for people! If Ann is 3rd from the front (2 people in front) and 2 people are behind her: <b>2 + 1 (Ann) + 2 = 5 people</b>.'
+        }
+      },
+      {
+        title: { th: '2. เลขคู่-คี่ และการคิดย้อนกลับ', en: '2. Even/Odd & Working Backwards' },
+        body: {
+          th: '• เลขคู่ลงท้าย <b>0, 2, 4, 6, 8</b> | เลขคี่ลงท้าย <b>1, 3, 5, 7, 9</b><br>• โจทย์ "ฉันนึกถึงจำนวนหนึ่ง บวก 4 ได้ 10" ให้คิดย้อนกลับเป็น <b>10 − 4 = 6</b>',
+          en: '• Even ends in <b>0, 2, 4, 6, 8</b>; Odd ends in <b>1, 3, 5, 7, 9</b>.<br>• For "I think of a number, add 4 and get 10", work backwards: <b>10 − 4 = 6</b>.'
+        }
+      }
+    ],
+    qs: [
+      {
+        t: { th: 'หมวยมีสติกเกอร์มากกว่านุ่น 4 ดวง ถ้านุ่นมี 6 ดวง หมวยมีสติกเกอร์กี่ดวง?', en: 'Mali has 4 more stickers than Nok. Nok has 6. How many does Mali have?' },
+        o: ['2', '8', '10', '24'],
+        a: 2,
+        hint: { th: 'หมวยมี "มากกว่า" นุ่น 4 ดวง จึงต้องนำ 6 ไปบวก 4', en: 'Mali has 4 MORE than 6, so add 6 + 4.' },
+        e: { th: '6 + 4 = 10 ดวง', en: '6 + 4 = 10 stickers.' }
+      },
+      {
+        t: { th: 'แอนยืนเป็นคนที่ 3 นับจากหัวแถว และข้างหลังแอนยังมีเด็กอีก 2 คน แถวนี้มีเด็กทั้งหมดกี่คน?', en: 'Ann is 3rd from the front of a line. 2 children stand behind her. How many children in the line?' },
+        o: ['4', '5', '6', '7'],
+        a: 1,
+        hint: { th: 'คนที่ 1, คนที่ 2, [แอน คนที่ 3], และข้างหลังอีก 2 คน', en: 'Count: 2 in front + Ann (1) + 2 behind.' },
+        e: { th: 'ข้างหน้า 2 คน + แอน 1 คน + ข้างหลัง 2 คน = 2 + 1 + 2 = 5 คน', en: '2 in front + Ann + 2 behind = 5 children.' }
+      },
+      {
+        t: { th: 'จำนวนในข้อใดเป็น "เลขคู่" (Even number)?', en: 'Which of the following is an EVEN number?' },
+        o: ['7', '9', '12', '15'],
+        a: 2,
+        hint: { th: 'เลขคู่จะลงท้ายด้วย 0, 2, 4, 6 หรือ 8', en: 'Even numbers end with 0, 2, 4, 6, or 8.' },
+        e: { th: '12 ลงท้ายด้วยเลข 2 จึงเป็นเลขคู่ (จับคู่ได้ 6 คู่พอดี)', en: '12 ends in 2, so it is an even number.' }
+      },
+      {
+        t: { th: 'เก้าอี้ 5 ตัว แต่ละตัวมี 3 ขา เก้าอี้ทั้งหมดมีรวมกันกี่ขา?', en: '5 stools have 3 legs each. How many legs altogether?' },
+        o: ['8', '12', '15', '18'],
+        a: 2,
+        hint: { th: 'นับเพิ่มทีละ 3 ห้าครั้ง: 3 + 3 + 3 + 3 + 3', en: 'Count by 3 five times: 3 + 3 + 3 + 3 + 3.' },
+        e: { th: '3 + 3 + 3 + 3 + 3 = 15 ขา (หรือ 3 × 5 = 15)', en: '3 × 5 = 15 legs.' }
+      },
+      {
+        t: { th: 'มีกระต่าย 3 ตัว กับ ไก่ 2 ตัว นับขารวมกันได้ทั้งหมดกี่ขา?', en: '3 rabbits and 2 chickens have how many legs altogether?' },
+        o: ['10', '14', '16', '20'],
+        a: 2,
+        hint: { th: 'กระต่ายมีตัวละ 4 ขา ส่วนไก่มีตัวละ 2 ขา', en: 'Each rabbit has 4 legs; each chicken has 2 legs.' },
+        e: { th: 'ขากระต่าย: 4 + 4 + 4 = 12 ขา | ขาไก่: 2 + 2 = 4 ขา | รวม 12 + 4 = 16 ขา', en: 'Rabbits: 4+4+4 = 12 legs. Chickens: 2+2 = 4 legs. Total: 12 + 4 = 16 legs.' }
+      }
+    ]
+  }
+];
+
+var SHORT = [
+  {
+    t: { th: '7 + 8 + 3 = ?', en: '7 + 8 + 3 = ?' },
+    a: '18',
+    hint: { th: 'จับคู่ 7 + 3 ให้ได้ 10 ก่อน แล้วค่อยบวก 8', en: 'Make 10 first with 7 + 3, then add 8.' },
+    e: { th: 'จับคู่ 7 + 3 = 10 แล้วนำ 10 + 8 = 18', en: '7 + 3 = 10, then 10 + 8 = 18.' }
+  },
+  {
+    t: { th: 'จำนวนที่มี 6 สิบ กับ 4 หน่วย คือจำนวนใด?', en: 'What number has 6 tens and 4 ones?' },
+    a: '64',
+    hint: { th: '6 สิบ คือ 60 บวกกับ 4 หน่วย', en: '6 tens is 60, plus 4 ones.' },
+    e: { th: '60 + 4 = 64', en: '60 + 4 = 64.' }
+  },
+  {
+    t: { th: '30, 27, 24, 21, ? ตัวเลขถัดไปคือเท่าไร?', en: '30, 27, 24, 21, ? What number comes next?' },
+    a: '18',
+    hint: { th: 'ตัวเลขลดลงทีละ 3', en: 'Subtract 3 each step.' },
+    e: { th: 'แบบรูปลดลงทีละ 3 ดังนั้น 21 − 3 = 18', en: 'Subtract 3 each time: 21 − 3 = 18.' }
+  },
+  {
+    t: { th: 'ดินสอ 3 กล่อง กล่องละ 5 แท่ง และมีดินสอวางข้างนอกอีก 2 แท่ง รวมมีดินสอกี่แท่ง?', en: '3 boxes with 5 pencils each, plus 2 loose pencils. How many pencils in total?' },
+    a: '17',
+    hint: { th: 'ในกล่อง: 5 + 5 + 5 แท่ง แล้วบวกอีก 2 แท่ง', en: 'In boxes: 5 + 5 + 5 = 15, then add 2.' },
+    e: { th: 'ในกล่อง 5 + 5 + 5 = 15 แท่ง บวกข้างนอกอีก 2 แท่ง = 15 + 2 = 17 แท่ง', en: '5 + 5 + 5 = 15, and 15 + 2 = 17 pencils.' }
+  },
+  {
+    t: { th: 'รูปสามเหลี่ยม 2 รูป กับ รูปสี่เหลี่ยมจัตุรัส 1 รูป มีด้านรวมกันทั้งหมดกี่ด้าน?', en: '2 triangles and 1 square have how many sides altogether?' },
+    a: '10',
+    hint: { th: 'สามเหลี่ยมมี 3 ด้าน (2 รูป) + สี่เหลี่ยมมี 4 ด้าน (1 รูป)', en: 'Triangle = 3 sides (×2) + Square = 4 sides.' },
+    e: { th: '3 + 3 + 4 = 10 ด้าน', en: '3 + 3 + 4 = 10 sides.' }
+  }
+];
+
+/* ============================================================================
+   PART 2: PROCEDURAL 25-QUESTION RANDOM MOCK TEST ENGINE
+   ============================================================================ */
+var TOPIC_META = {
+  num:   { th: 'จำนวนและค่าประจำหลัก', en: 'Numbers & Place Value', ic: '🔢', color: '#2563EB', idx: 0 },
+  add:   { th: 'บวก ลบ คูณ หาร', en: 'Operations', ic: '➕', color: '#059669', idx: 1 },
+  pat:   { th: 'แบบรูปและความสัมพันธ์', en: 'Patterns', ic: '🧩', color: '#7C3AED', idx: 2 },
+  shape: { th: 'รูปทรงเรขาคณิต', en: 'Shapes', ic: '🔷', color: '#D97706', idx: 3 },
+  time:  { th: 'เวลาและเงิน', en: 'Time & Money', ic: '⏰', color: '#E11D48', idx: 4 },
+  meas:  { th: 'การวัด', en: 'Measurement', ic: '📏', color: '#0891B2', idx: 5 },
+  logic: { th: 'ตรรกะและโจทย์ปัญหา', en: 'Logic & Word Problems', ic: '💡', color: '#EA580C', idx: 6 }
+};
+
+var NAMES = [['แอน','Ann'],['บอล','Ben'],['มิว','Mew'],['โอม','Ohm'],['ฟ้า','Fah'],['กัน','Kan'],['นุ่น','Noon'],['พีท','Pete']];
+var IT = [
+  {th:'ลูกแก้ว',cl:'เม็ด',en:'marbles'},
+  {th:'สติกเกอร์',cl:'ดวง',en:'stickers'},
+  {th:'ลูกโป่ง',cl:'ลูก',en:'balloons'},
+  {th:'คุกกี้',cl:'ชิ้น',en:'cookies'},
+  {th:'ดินสอ',cl:'แท่ง',en:'pencils'},
+  {th:'ส้ม',cl:'ผล',en:'oranges'}
+];
+
+function nm(R) { var n = R.pick(NAMES); return { th: n[0], en: n[1] }; }
+function hashSeed(s) {
+  var h = 1779033703 ^ s.length;
+  for (var i = 0; i < s.length; i++) {
+    h = Math.imul(h ^ s.charCodeAt(i), 3432918353);
+    h = h << 13 | h >>> 19;
+  }
+  h = Math.imul(h ^ h >>> 16, 2246822507);
+  h = Math.imul(h ^ h >>> 13, 3266489909);
+  return (h ^ h >>> 16) >>> 0;
+}
+function mulberry(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function RNG(seed) {
+  var r = mulberry(hashSeed(seed));
+  return {
+    int: function(a, b) { return a + Math.floor(r() * (b - a + 1)); },
+    pick: function(arr) { return arr[Math.floor(r() * arr.length)]; },
+    shuffle: function(arr) {
+      arr = arr.slice();
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(r() * (i + 1));
+        var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      }
+      return arr;
+    }
+  };
+}
+
+var TPL = [
+  {id:'addsub',tier:2,lv:[1,2],topic:'add',f:function(R,L){
+    var n=nm(R),it=R.pick(IT);var a=L==1?R.int(6,12):R.int(20,50),b=L==1?R.int(2,8):R.int(10,30);var c=R.int(2,L==1?6:25);var r=a+b-c;
+    return {q:S(n.th+'มี'+it.th+' '+a+' '+it.cl+' ได้เพิ่มอีก '+b+' '+it.cl+' แล้วให้เพื่อนไป '+c+' '+it.cl+' ตอนนี้'+n.th+'มี'+it.th+'กี่'+it.cl+'?',n.en+' has '+a+' '+it.en+', gets '+b+' more, then gives away '+c+'. How many '+it.en+' does '+n.en+' have now?'),a:r,e:S(a+' + '+b+' = '+(a+b)+' แล้ว '+(a+b)+' − '+c+' = '+r,a+' + '+b+' = '+(a+b)+', then '+(a+b)+' − '+c+' = '+r)};}},
+  {id:'place',tier:1,lv:[1,2],topic:'num',f:function(R,L){
+    if(R.int(0,1)){var N=R.int(10,99),t=Math.floor(N/10);return {q:S('เลข '+N+' มีกี่สิบ?','How many tens are in '+N+'?'),a:t,e:S(N+' = '+t+' สิบ '+(N%10)+' หน่วย',N+' = '+t+' tens and '+(N%10)+' ones')};}
+    var t2=R.int(1,9),u=R.int(0,9),M=10*t2+u;return {q:S(t2+' สิบ กับ '+u+' หน่วย คือจำนวนใด?',t2+' tens and '+u+' ones make which number?'),a:M,e:S(t2*10+' + '+u+' = '+M,t2*10+' + '+u+' = '+M)};}},
+  {id:'greatest',tier:1,lv:[1,2],topic:'num',f:function(R,L){
+    var lo=L==1?10:100,hi=L==1?99:999,set={},arr=[];while(arr.length<4){var x=R.int(lo,hi);if(!set[x]){set[x]=1;arr.push(x);}}
+    var big=R.int(0,1),a=big?Math.max.apply(null,arr):Math.min.apply(null,arr);var wrong=arr.filter(function(x){return x!==a;});
+    return {q:S('จำนวนใด'+(big?'มากที่สุด':'น้อยที่สุด')+': '+arr.join(', '),'Which number is the '+(big?'greatest':'smallest')+': '+arr.join(', ')+'?'),a:a,wrong:wrong,e:S('เทียบจากหลักซ้ายสุดก่อน ได้ '+a,'Compare from the leftmost digit first. The answer is '+a+'.')};}},
+  {id:'padd',tier:1,lv:[1,2],topic:'pat',f:function(R,L){
+    var s=R.int(1,L==1?10:30),d=R.int(2,L==1?5:9),ts=[0,1,2,3].map(function(i){return s+d*i;}),a=s+4*d;
+    return {q:S(ts.join(', ')+', ? ตัวต่อไปคือเท่าไร?',ts.join(', ')+', ? What comes next?'),a:a,e:S('บวกทีละ '+d+' → '+ts[3]+' + '+d+' = '+a,'Add '+d+' each time → '+ts[3]+' + '+d+' = '+a)};}},
+  {id:'pgrow',tier:3,lv:[1,2],topic:'pat',f:function(R,L){
+    var s=R.int(1,L==1?5:20),ts=[s,s+1,s+3,s+6,s+10],a=s+15;
+    return {q:S(ts.join(', ')+', ? ตัวต่อไปคือเท่าไร?',ts.join(', ')+', ? What comes next?'),a:a,e:S('ผลต่างคือ 1, 2, 3, 4 ต่อไปบวก 5 → '+ts[4]+' + 5 = '+a,'The gaps are 1, 2, 3, 4. Next gap is 5 → '+ts[4]+' + 5 = '+a)};}},
+  {id:'pmiss',tier:2,lv:[1,2],topic:'pat',f:function(R,L){
+    var a0=R.int(1,L==1?10:30),d=R.int(2,L==1?6:9),a=a0+2*d;
+    return {q:S(a0+', '+(a0+d)+', ?, '+(a0+3*d)+', '+(a0+4*d)+' จำนวนที่หายไปคือเท่าไร?',a0+', '+(a0+d)+', ?, '+(a0+3*d)+', '+(a0+4*d)+' What is the missing number?'),a:a,e:S('บวกทีละ '+d+' → '+(a0+d)+' + '+d+' = '+a,'Add '+d+' each time → '+(a0+d)+' + '+d+' = '+a)};}},
+  {id:'groups',tier:2,lv:[1,2],topic:'add',f:function(R,L){
+    var N=R.int(2,L==1?3:7),M=R.int(2,L==1?5:9),K=R.int(2,L==1?5:9),a=N*M+K;
+    return {q:S('มีกล่องดินสอ '+N+' กล่อง กล่องละ '+M+' แท่ง และมีดินสออยู่นอกกล่องอีก '+K+' แท่ง รวมมีดินสอกี่แท่ง?',N+' boxes with '+M+' pencils each, plus '+K+' loose pencils. How many pencils altogether?'),a:a,e:S(N+' กล่อง × '+M+' = '+(N*M)+' แล้ว + '+K+' = '+a,N+' × '+M+' = '+(N*M)+', then + '+K+' = '+a)};}},
+  {id:'share',tier:2,lv:[1,2],topic:'add',f:function(R,L){
+    var K=R.int(2,L==1?4:6),Q=R.int(2,L==1?5:9),N=K*Q;
+    return {q:S('มีขนม '+N+' ชิ้น แบ่งให้เด็ก '+K+' คนเท่าๆ กัน ได้คนละกี่ชิ้น?',N+' sweets are shared equally among '+K+' children. How many does each child get?'),a:Q,e:S(N+' ÷ '+K+' = '+Q,N+' ÷ '+K+' = '+Q)};}},
+  {id:'change',tier:2,lv:[1,2],topic:'time',f:function(R,L){
+    var p1,p2,pay;if(L==1){p1=R.int(3,9);p2=R.int(2,9);pay=20;}else{p1=R.int(12,39);p2=R.int(8,35);pay=(p1+p2<50)?50:100;}
+    var a=pay-p1-p2;return {q:S('ปากกา '+p1+' บาท สมุด '+p2+' บาท จ่ายเงิน '+pay+' บาท ได้เงินทอนกี่บาท?','A pen costs '+p1+' baht and a notebook costs '+p2+' baht. You pay '+pay+' baht. How much change (baht)?'),a:a,e:S(p1+' + '+p2+' = '+(p1+p2)+' แล้ว '+pay+' − '+(p1+p2)+' = '+a,p1+' + '+p2+' = '+(p1+p2)+', then '+pay+' − '+(p1+p2)+' = '+a)};}},
+  {id:'time',tier:2,lv:[1,2],topic:'time',f:function(R,L){
+    if(L==2&&R.int(0,1)){var H=R.int(1,6),E=R.int(H+2,11),a=E-H;return {q:S('เริ่มเรียนเวลา '+H+':00 เลิกเรียนเวลา '+E+':00 เรียนนานกี่ชั่วโมง?','Class starts at '+H+':00 and ends at '+E+':00. How many hours long?'),a:a,e:S(E+' − '+H+' = '+a,E+' − '+H+' = '+a)};}
+    var H2=R.int(7,9),D=R.int(1,3),a2=H2+D;return {q:S('เริ่มเรียนเวลา '+H2+':00 เรียนนาน '+D+' ชั่วโมง เลิกเรียนเวลากี่โมง? (ตอบเฉพาะชั่วโมง เช่น 11 คือ 11:00)','Class starts at '+H2+':00 and lasts '+D+' hours. What time does it end? (hour only, e.g. 11 for 11:00)'),a:a2,e:S(H2+' + '+D+' = '+a2,H2+' + '+D+' = '+a2)};}},
+  {id:'corners',tier:1,lv:[1,2],topic:'shape',f:function(R,L){
+    var X=R.int(1,L==1?3:5),Y=R.int(1,L==1?3:5),sd=R.int(0,1),a=3*X+4*Y,w=sd?'ด้าน':'มุม';
+    return {q:S('สามเหลี่ยม '+X+' รูป กับ สี่เหลี่ยมจัตุรัส '+Y+' รูป นับ'+w+'ทั้งหมดได้กี่'+w+'?',X+' triangle'+(X>1?'s':'')+' and '+Y+' square'+(Y>1?'s':'')+'. How many '+(sd?'sides':'corners')+' altogether?'),a:a,e:S('สามเหลี่ยมมี 3 สี่เหลี่ยมมี 4 → '+X+'×3 + '+Y+'×4 = '+a,'A triangle has 3 and a square has 4 → '+X+'×3 + '+Y+'×4 = '+a)};}},
+  {id:'cube',tier:2,lv:[1,2],topic:'shape',f:function(R,L){
+    var k=R.int(2,4);if(L==1){var a=6*k;return {q:S('ลูกบาศก์ 1 ลูกมี 6 หน้า ลูกบาศก์ '+k+' ลูกมีหน้ารวมกี่หน้า?','One cube has 6 faces. How many faces do '+k+' cubes have?'),a:a,e:S('6 × '+k+' = '+a,'6 × '+k+' = '+a)};}
+    var a2=12*k;return {q:S('ลูกบาศก์ 1 ลูกมีกี่ขอบ? ลูกบาศก์ '+k+' ลูกมีขอบรวมกี่ขอบ?','A cube has some edges. How many edges do '+k+' cubes have altogether?'),a:a2,e:S('ลูกบาศก์ 1 ลูกมี 12 ขอบ → 12 × '+k+' = '+a2,'One cube has 12 edges → 12 × '+k+' = '+a2)};}},
+  {id:'perim',tier:2,lv:[1,2],topic:'shape',f:function(R,L){
+    if(L==1){var s=R.int(2,9),a=4*s;return {q:S('สี่เหลี่ยมจัตุรัสยาวด้านละ '+s+' ซม. รอบรูปยาวกี่ซม.?','A square has sides of '+s+' cm. What is its perimeter (cm)?'),a:a,e:S(s+' + '+s+' + '+s+' + '+s+' = '+a,s+' + '+s+' + '+s+' + '+s+' = '+a)};}
+    var l=R.int(4,12),w=R.int(2,l-1),a2=2*(l+w);return {q:S('สี่เหลี่ยมผืนผ้ายาว '+l+' ซม. กว้าง '+w+' ซม. รอบรูปยาวกี่ซม.?','A rectangle is '+l+' cm long and '+w+' cm wide. What is its perimeter (cm)?'),a:a2,e:S('2 × ('+l+' + '+w+') = '+a2,'2 × ('+l+' + '+w+') = '+a2)};}},
+  {id:'lendiff',tier:2,lv:[1,2],topic:'meas',f:function(R,L){
+    var A=R.int(L==1?10:30,L==1?20:60),d=R.int(2,L==1?8:15),B=A-d;
+    return {q:S('ริบบิ้น A ยาว '+A+' ซม. ริบบิ้น B ยาว '+B+' ซม. A ยาวกว่า B กี่ซม.?','Ribbon A is '+A+' cm and ribbon B is '+B+' cm. How much longer is A (cm)?'),a:d,e:S(A+' − '+B+' = '+d,A+' − '+B+' = '+d)};}},
+  {id:'morefewer',tier:1,lv:[1,2],topic:'logic',f:function(R,L){
+    var n=R.int(L==1?5:20,L==1?15:60),k=R.int(2,L==1?5:20),a=R.int(0,1),p=nm(R),q=nm(R);while(q.en===p.en)q=nm(R);var it=R.pick(IT),r=a?n+k:n-k;
+    return {q:S(q.th+'มี'+it.th+' '+n+' '+it.cl+' '+p.th+'มี'+it.th+(a?'มากกว่า':'น้อยกว่า')+q.th+' '+k+' '+it.cl+' '+p.th+'มี'+it.th+'กี่'+it.cl+'?',q.en+' has '+n+' '+it.en+'. '+p.en+' has '+k+(a?' more':' fewer')+' than '+q.en+'. How many does '+p.en+' have?'),a:r,e:S(n+(a?' + ':' − ')+k+' = '+r,n+(a?' + ':' − ')+k+' = '+r)};}},
+  {id:'line',tier:2,lv:[1,2],topic:'logic',f:function(R,L){
+    var n=nm(R),p=R.int(L==1?2:3,L==1?6:9),b=R.int(L==1?1:3,L==1?6:9),a=p+b;
+    return {q:S(n.th+'ยืนเป็นคนที่ '+p+' นับจากหัวแถว ข้างหลัง'+n.th+'มีเด็กอีก '+b+' คน แถวนี้มีเด็กทั้งหมดกี่คน?',n.en+' is '+p+'th from the front of a line. There are '+b+' children behind '+n.en+'. How many children in the line?'),a:a,e:S('ข้างหน้า '+(p-1)+' + '+n.th+' 1 + ข้างหลัง '+b+' = '+a,(p-1)+' in front + 1 + '+b+' behind = '+a)};}},
+  {id:'legs',tier:1,lv:[1,2],topic:'logic',f:function(R,L){
+    var n=R.int(L==1?1:2,L==1?2:6),m=R.int(L==1?1:2,L==1?3:7),a=4*n+2*m;
+    return {q:S('แมว '+n+' ตัว และนก '+m+' ตัว มีขารวมกันกี่ขา?',n+' cat'+(n>1?'s':'')+' and '+m+' bird'+(m>1?'s':'')+'. How many legs altogether?'),a:a,e:S('แมวขาละ 4: '+n+'×4 = '+4*n+', นกขาละ 2: '+m+'×2 = '+2*m+' รวม '+a,'Cats have 4 legs: '+n+'×4 = '+4*n+'. Birds have 2: '+m+'×2 = '+2*m+'. Total '+a)};}},
+  {id:'evencount',tier:2,lv:[1,2],topic:'num',f:function(R,L){
+    var N=R.pick(L==1?[6,8,10,12,14,16]:[20,24,26,30,34,40]),ev=R.int(0,1),a=N/2;
+    return {q:S('มีเลข'+(ev?'คู่':'คี่')+'กี่จำนวน ตั้งแต่ 1 ถึง '+N+'?','How many '+(ev?'even':'odd')+' numbers are there from 1 to '+N+'?'),a:a,e:S('ตั้งแต่ 1 ถึง '+N+' เลขคู่กับเลขคี่สลับกัน อย่างละครึ่ง = '+a,'From 1 to '+N+', even and odd numbers alternate, so half each = '+a)};}},
+  {id:'pdown',tier:2,lv:[1,2],topic:'pat',f:function(R,L){
+    var d=R.int(2,L==1?5:9),s=R.int(4*d+1,4*d+(L==1?10:30)),ts=[0,1,2,3].map(function(i){return s-d*i;}),a=s-4*d;
+    return {q:S(ts.join(', ')+', ? ตัวต่อไปคือเท่าไร?',ts.join(', ')+', ? What comes next?'),a:a,e:S('ลบทีละ '+d+' → '+ts[3]+' − '+d+' = '+a,'Subtract '+d+' each time → '+ts[3]+' − '+d+' = '+a)};}},
+  {id:'think',tier:2,lv:[1,2],topic:'logic',f:function(R,L){
+    if(L==1){var n=R.int(2,15),A=R.int(2,9),B=n+A;return {q:S('ฉันนึกถึงจำนวนหนึ่ง บวกด้วย '+A+' ได้ '+B+' จำนวนนั้นคือเท่าไร?','I think of a number. I add '+A+' and get '+B+'. What is my number?'),a:n,e:S(B+' − '+A+' = '+n,B+' − '+A+' = '+n)};}
+    var n2=R.int(3,20),a=R.int(3,15),b=2*n2+a;return {q:S('ฉันนึกถึงจำนวนหนึ่ง คูณสอง แล้วบวก '+a+' ได้ '+b+' จำนวนนั้นคือเท่าไร?','I think of a number, double it, then add '+a+'. I get '+b+'. What is my number?'),a:n2,e:S(b+' − '+a+' = '+(b-a)+' แล้ว '+(b-a)+' ÷ 2 = '+n2,b+' − '+a+' = '+(b-a)+', then '+(b-a)+' ÷ 2 = '+n2)};}},
+  {id:'handshake',tier:3,lv:[2],topic:'logic',f:function(R,L){
+    var n=R.int(3,6),a=n*(n-1)/2;
+    return {q:S('เด็ก '+n+' คน จับมือกันครบทุกคู่คนละ 1 ครั้ง จับมือกันทั้งหมดกี่ครั้ง?',n+' children each shake hands with every other child once. How many handshakes in total?'),a:a,e:S(n+' × '+(n-1)+' ÷ 2 = '+a+' (นับคู่ซ้ำสองรอบจึงหารสอง)',n+' × '+(n-1)+' ÷ 2 = '+a+' (each pair is counted twice, so divide by 2)'),wrong:[n,n*(n-1),2*n]};}},
+  {id:'tenmore',tier:1,lv:[1,2],topic:'num',f:function(R,L){
+    var k=L==1?10:R.pick([10,20,30]),N=R.int(L==1?11:35,89),more=R.int(0,1),a=more?N+k:N-k;
+    return {q:S('จำนวนที่'+(more?'มากกว่า':'น้อยกว่า')+' '+N+' อยู่ '+k+' คือจำนวนใด?','What number is '+k+(more?' more than ':' less than ')+N+'?'),a:a,e:S(N+(more?' + ':' − ')+k+' = '+a,N+(more?' + ':' − ')+k+' = '+a)};}},
+  {id:'coins',tier:2,lv:[1,2],topic:'time',f:function(R,L){
+    var c10=L==2?R.int(1,3):0,c5=R.int(1,3),c2=R.int(1,3),c1=R.int(2,4),a=10*c10+5*c5+2*c2+c1,th=[],en=[];
+    if(c10){th.push('10 บาท '+c10+' เหรียญ');en.push(c10+' × 10-baht');}th.push('5 บาท '+c5+' เหรียญ');en.push(c5+' × 5-baht');th.push('2 บาท '+c2+' เหรียญ');en.push(c2+' × 2-baht');th.push('1 บาท '+c1+' เหรียญ');en.push(c1+' × 1-baht');
+    return {q:S('มีเหรียญ '+th.join(' ')+' รวมกี่บาท?','Coins: '+en.join(', ')+'. How many baht altogether?'),a:a,e:S((c10?10*c10+' + ':'')+5*c5+' + '+2*c2+' + '+c1+' = '+a,(c10?10*c10+' + ':'')+5*c5+' + '+2*c2+' + '+c1+' = '+a)};}},
+  {id:'dblhalf',tier:1,lv:[1,2],topic:'add',f:function(R,L){
+    if(R.int(0,1)){var N=R.int(L==1?3:12,L==1?20:45);return {q:S('สองเท่าของ '+N+' คือเท่าไร?','What is double '+N+'?'),a:2*N,e:S(N+' + '+N+' = '+2*N,N+' + '+N+' = '+2*N)};}
+    var H=R.int(L==1?2:10,L==1?10:40),M=2*H;return {q:S('ครึ่งหนึ่งของ '+M+' คือเท่าไร?','What is half of '+M+'?'),a:H,e:S(M+' ÷ 2 = '+H,M+' ÷ 2 = '+H)};}},
+  {id:'weeks',tier:2,lv:[1,2],topic:'time',f:function(R,L){
+    var w=R.int(L==1?1:2,L==1?2:5),d=R.int(1,6),a=7*w+d;
+    return {q:S(w+' สัปดาห์ กับอีก '+d+' วัน รวมกี่วัน?',w+' week'+(w>1?'s':'')+' and '+d+' more day'+(d>1?'s':'')+'. How many days altogether?'),a:a,e:S('1 สัปดาห์ = 7 วัน → '+w+'×7 = '+7*w+' แล้ว + '+d+' = '+a,'1 week = 7 days → '+w+'×7 = '+7*w+', then + '+d+' = '+a)};}},
+  {id:'age',tier:2,lv:[1,2],topic:'logic',f:function(R,L){
+    var n=nm(R),a0=R.int(L==1?5:6,L==1?8:12),k=R.int(L==1?1:2,L==1?5:9),y=R.int(L==1?1:3,L==1?5:10),a=a0+k+y;
+    return {q:S(n.th+'อายุ '+a0+' ปี พี่ชายอายุมากกว่า '+n.th+' '+k+' ปี อีก '+y+' ปี พี่ชายจะอายุกี่ปี?',n.en+' is '+a0+' years old. '+n.en+'\'s brother is '+k+' years older. How old will the brother be in '+y+' years?'),a:a,e:S('ตอนนี้พี่ชายอายุ '+a0+' + '+k+' = '+(a0+k)+' อีก '+y+' ปี = '+a,'Brother now: '+a0+' + '+k+' = '+(a0+k)+'. In '+y+' years: '+a)};}},
+  {id:'digitsum',tier:1,lv:[1,2],topic:'num',f:function(R,L){
+    var N=L==1?R.int(10,99):R.int(100,999),a=String(N).split('').reduce(function(s,c){return s+Number(c);},0);
+    return {q:S('ผลบวกของเลขโดดในจำนวน '+N+' คือเท่าไร?','What is the sum of the digits of '+N+'?'),a:a,e:S(String(N).split('').join(' + ')+' = '+a,String(N).split('').join(' + ')+' = '+a)};}},
+  {id:'frog',tier:3,lv:[2],topic:'logic',f:function(R,L){
+    var f=R.int(3,6),b=R.int(1,f-1),r=R.int(2,6),a=r*(f-b);
+    return {q:S('กบเริ่มที่ 0 กระโดดไปข้างหน้า '+f+' ก้าว แล้วถอยหลัง '+b+' ก้าว ทำซ้ำแบบนี้ '+r+' รอบ กบอยู่ที่ตำแหน่งใด?','A frog starts at 0. It jumps '+f+' steps forward then '+b+' steps back. It does this '+r+' times. Where is the frog?'),a:a,e:S('แต่ละรอบไปข้างหน้าสุทธิ '+f+' − '+b+' = '+(f-b)+' → '+r+' × '+(f-b)+' = '+a,'Each round moves '+f+' − '+b+' = '+(f-b)+' forward → '+r+' × '+(f-b)+' = '+a)};}},
+  {id:'sumap',tier:3,lv:[2],topic:'add',f:function(R,L){
+    var a0=R.int(2,10),d=R.int(2,6),ts=[a0,a0+d,a0+2*d,a0+3*d],a=4*a0+6*d;
+    return {q:S('หาค่าของ '+ts.join(' + ')+' = ?','Find the value of '+ts.join(' + ')+' = ?'),a:a,e:S('จับคู่ปลาย: ('+ts[0]+' + '+ts[3]+') + ('+ts[1]+' + '+ts[2]+') = '+(ts[0]+ts[3])+' + '+(ts[1]+ts[2])+' = '+a,'Pair the ends: ('+ts[0]+' + '+ts[3]+') + ('+ts[1]+' + '+ts[2]+') = '+(ts[0]+ts[3])+' + '+(ts[1]+ts[2])+' = '+a)};}},
+  {id:'rects',tier:3,lv:[2],topic:'shape',f:function(R,L){
+    var n=R.int(3,6),a=n*(n+1)/2;
+    return {q:S('แถวสี่เหลี่ยมจัตุรัสเล็กเรียงกัน '+n+' ช่อง มีรูปสี่เหลี่ยม (รวมสี่เหลี่ยมจัตุรัส) ทั้งหมดกี่รูป?','A row of '+n+' small squares. How many rectangles (including squares) can you find?'),a:a,e:S('นับ '+Array.from({length:n},function(_,i){return n-i;}).join(' + ')+' = '+a+' (ยาว 1 ช่อง, 2 ช่อง, ...)','Count '+Array.from({length:n},function(_,i){return n-i;}).join(' + ')+' = '+a+' (length 1, length 2, ...)'),wrong:[n,2*n-1,n*n]};}},
+  {id:'sameweight',tier:3,lv:[2],topic:'meas',f:function(R,L){
+    var x=R.int(3,5),u=R.int(2,6),y=R.int(x+2,x+5),W=x*u,a=u*y;
+    return {q:S('กล่อง '+x+' ใบ หนักรวม '+W+' กก. ทุกกล่องหนักเท่ากัน กล่อง '+y+' ใบ หนักรวมกี่กก.?',x+' identical boxes weigh '+W+' kg. How much do '+y+' boxes weigh (kg)?'),a:a,e:S('กล่อง 1 ใบ = '+W+' ÷ '+x+' = '+u+' กก. → '+u+' × '+y+' = '+a,'One box = '+W+' ÷ '+x+' = '+u+' kg → '+u+' × '+y+' = '+a)};}}
+];
+
+function options(R, ans, wrong) {
+  var set = {}; set[ans] = 1; var w = [];
+  (wrong || []).forEach(function(x) { if (x >= 0 && !set[x]) { set[x] = 1; w.push(x); } });
+  var cand = R.shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 10, ans - 10, ans + 3, ans - 3]);
+  for (var i = 0; i < cand.length && w.length < 3; i++) {
+    var x = cand[i];
+    if (x >= 0 && !set[x]) { set[x] = 1; w.push(x); }
+  }
+  w = w.slice(0, 3);
+  return R.shuffle([ans].concat(w));
+}
+
+function choose(stage, L, used, R) {
+  var pool = TPL.filter(function(t) { return t.lv.indexOf(L) >= 0; });
+  var ord = stage == 1 ? [1, 2, 3] : stage == 2 ? [2, 3, 1] : [3, 2, 1];
+  for (var i = 0; i < ord.length; i++) {
+    var c = pool.filter(function(t) { return t.tier == ord[i] && !used[t.id]; });
+    if (c.length) return R.pick(c);
+  }
+  return R.pick(pool);
+}
+
+function loadSeen() {
+  try { return JSON.parse(localStorage.getItem('seamo_gen_seen_v1') || '{}'); } catch (e) { return {}; }
+}
+
+function saveSeen(o) {
+  try {
+    var k = Object.keys(o);
+    if (k.length > 4000) {
+      var n = {};
+      k.slice(k.length - 3000).forEach(function(x) { n[x] = 1; });
+      o = n;
+    }
+    localStorage.setItem('seamo_gen_seen_v1', JSON.stringify(o));
+  } catch (e) {}
+}
+
+function genTest(seed, L, useSeen) {
+  var R = RNG(seed), seen = useSeen ? loadSeen() : {}, used = {}, keys = {}, qs = [];
+  for (var i = 0; i < 25; i++) {
+    var stage = i < 10 ? 1 : i < 20 ? 2 : 3;
+    var first = choose(stage, L, used, R);
+    var cands = [first].concat(
+      R.shuffle(TPL.filter(function(t) { return t.lv.indexOf(L) >= 0 && t !== first && !used[t.id]; })),
+      R.shuffle(TPL.filter(function(t) { return t.lv.indexOf(L) >= 0 && t !== first && used[t.id]; }))
+    );
+    var tpl = first, q = null, key = '', ok = false;
+    for (var ci = 0; ci < cands.length && !ok; ci++) {
+      tpl = cands[ci];
+      for (var tries = 0; tries < 30 && !ok; tries++) {
+        q = tpl.f(R, L);
+        key = tpl.id + '|' + q.q.th;
+        ok = !(seen[key] || keys[key]);
+      }
+    }
+    used[tpl.id] = 1;
+    keys[key] = 1;
+    var o = { tid: tpl.id, topic: tpl.topic, q: q.q, a: q.a, e: q.e, key: key, pts: i < 10 ? 3 : i < 20 ? 4 : 6, type: i < 20 ? 'mc' : 'sa' };
+    if (o.type == 'mc') {
+      o.opts = options(R, q.a, q.wrong);
+      o.ai = o.opts.indexOf(q.a);
+    }
+    qs.push(o);
+  }
+  if (useSeen) {
+    qs.forEach(function(x) { seen[x.key] = 1; });
+    saveSeen(seen);
+  }
+  return qs;
+}
+
+/* ============================================================================
+   STATE MANAGEMENT
+   ============================================================================ */
+var view = 'home'; // Review views: 'home' | 'lesson' | 'quiz' | 'result' | 'short' | 'shortres'
+var tp = 0;
+var qi = 0;
+var score = 0;
+var order = [];
+var guideOpen = false;
+var saved = {};
+
+var labState = {
+  tens: 4,
+  ones: 7,
+  makeTenA: 8,
+  makeTenB: 5,
+  clockStart: 9,
+  clockDur: 2,
+  shapeTab: 'tri'
+};
+
+// Mock Test State
+var st = null;
+var cfg = { level: 1, mode: 'practice', timer: true, layout: 'all', seed: '' }; // layout: 'all' | 'focus'
+var tmr = null;
+var focusIdx = 0;
+var navOpen = false;
+
+try { saved = JSON.parse(localStorage.getItem('seamo12') || '{}'); } catch (e) { saved = {}; }
+function save() { try { localStorage.setItem('seamo12', JSON.stringify(saved)); } catch (e) {} }
+
+function resetProgress() {
+  playSound('click');
+  saved = {};
+  save();
+  render();
+}
+
+function seenCount() { return Object.keys(loadSeen()).length; }
+function randSeed() {
+  var c = 'abcdefghjkmnpqrstuvwxyz23456789', s = '';
+  for (var i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)];
+  return s;
+}
+
+/* ============================================================================
+   HEADER & PORTAL NAVIGATION
+   ============================================================================ */
+function renderHeaderTabs() {
+  var L = [['th', 'ไทย'], ['both', 'TH + EN'], ['en', 'EN']];
+  document.getElementById('lang-bar').innerHTML = L.map(function(x) {
+    var active = mode === x[0];
+    return '<button onclick="setMode(\'' + x[0] + '\')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ' +
+      (active ? 'bg-blue-600 text-white shadow-sm' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]') + '">' +
+      x[1] + '</button>';
+  }).join('');
+
+  var tabRev = document.getElementById('tab-review');
+  var tabMock = document.getElementById('tab-mock');
+  if (tabRev && tabMock) {
+    tabRev.className = 'py-2.5 px-4 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ' +
+      (portal === 'review' ? 'bg-blue-600 text-white shadow-sm' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]');
+    tabMock.className = 'py-2.5 px-4 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ' +
+      (portal === 'mock' ? 'bg-indigo-600 text-white shadow-sm' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]');
+  }
+  var lblRev = document.getElementById('tab-review-label');
+  var lblMock = document.getElementById('tab-mock-label');
+  if (lblRev) lblRev.textContent = mode === 'en' ? 'Topic Review (7 Modules)' : 'ทบทวนบทเรียน (7 หัวข้อ)';
+  if (lblMock) lblMock.textContent = mode === 'en' ? 'Random Mock Test (25 Qs · 100 pts)' : 'แบบทดสอบสุ่ม 25 ข้อ (100 คะแนน)';
+}
+
+function setMode(m) {
+  playSound('click');
+  mode = m;
+  renderHeaderTabs();
+  render();
+}
+
+function switchPortal(p) {
+  playSound('click');
+  portal = p;
+  renderHeaderTabs();
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function jumpToTopicLesson(topicKey) {
+  var meta = TOPIC_META[topicKey];
+  if (!meta) return;
+  portal = 'review';
+  view = 'lesson';
+  tp = meta.idx;
+  renderHeaderTabs();
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================================
+   INTERACTIVE LABS FOR TOPIC LESSONS
+   ============================================================================ */
+function renderInteractiveLab(topicId) {
+  if (topicId === 'num') {
+    var numVal = labState.tens * 10 + labState.ones;
+    var tensBlocks = '';
+    for (var t = 0; t < labState.tens; t++) {
+      tensBlocks += '<div class="w-5 h-24 rounded-md bg-blue-600 border border-blue-400 flex flex-col justify-between p-0.5 shadow-sm" title="1 สิบ (10)">' +
+        Array(10).fill('<div class="h-1.5 border-b border-blue-300/40"></div>').join('') +
+        '</div>';
+    }
+    var onesBlocks = '';
+    for (var o = 0; o < labState.ones; o++) {
+      onesBlocks += '<div class="w-5 h-5 rounded bg-amber-500 border border-amber-300 shadow-sm flex items-center justify-center text-xs font-bold text-white">1</div>';
+    }
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400">🧪 สื่อจำลองค่าประจำหลัก · Interactive Base-10 Blocks</span>' +
+        '<span class="text-xs text-[var(--muted-foreground)]">ลองกด + / − เพื่อเปลี่ยนจำนวน!</span>' +
+      '</div>' +
+      '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">' +
+        '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5 text-center">' +
+          '<p class="text-xs text-[var(--muted-foreground)] mb-1">หลักสิบ (Tens)</p>' +
+          '<div class="flex items-center justify-center gap-3 mb-2">' +
+            '<button onclick="adjustLab(\'tens\',-1)" class="w-8 h-8 rounded-lg border border-[var(--border)] font-bold hover:bg-[var(--secondary)]">−</button>' +
+            '<span class="text-2xl font-extrabold text-blue-600 dark:text-blue-400">' + labState.tens + '</span>' +
+            '<button onclick="adjustLab(\'tens\',1)" class="w-8 h-8 rounded-lg border border-[var(--border)] font-bold hover:bg-[var(--secondary)]">+</button>' +
+          '</div>' +
+          '<div class="min-h-[104px] flex items-end justify-center gap-1.5 flex-wrap py-1">' + (tensBlocks || '<span class="text-xs text-[var(--muted-foreground)]">0 สิบ</span>') + '</div>' +
+          '<p class="text-xs font-semibold mt-1 text-blue-600 dark:text-blue-400">' + labState.tens + ' สิบ = ' + (labState.tens * 10) + '</p>' +
+        '</div>' +
+        '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5 text-center">' +
+          '<p class="text-xs text-[var(--muted-foreground)] mb-1">หลักหน่วย (Ones)</p>' +
+          '<div class="flex items-center justify-center gap-3 mb-2">' +
+            '<button onclick="adjustLab(\'ones\',-1)" class="w-8 h-8 rounded-lg border border-[var(--border)] font-bold hover:bg-[var(--secondary)]">−</button>' +
+            '<span class="text-2xl font-extrabold text-amber-500">' + labState.ones + '</span>' +
+            '<button onclick="adjustLab(\'ones\',1)" class="w-8 h-8 rounded-lg border border-[var(--border)] font-bold hover:bg-[var(--secondary)]">+</button>' +
+          '</div>' +
+          '<div class="min-h-[104px] flex items-center justify-center gap-1.5 flex-wrap max-w-[140px] mx-auto py-1">' + (onesBlocks || '<span class="text-xs text-[var(--muted-foreground)]">0 หน่วย</span>') + '</div>' +
+          '<p class="text-xs font-semibold mt-1 text-amber-600 dark:text-amber-400">' + labState.ones + ' หน่วย = ' + labState.ones + '</p>' +
+        '</div>' +
+        '<div class="bg-[var(--card)] border-2 border-blue-500/40 rounded-xl p-4 text-center flex flex-col justify-center h-full">' +
+          '<p class="text-xs text-[var(--muted-foreground)]">จำนวนที่ได้ (Result)</p>' +
+          '<div class="text-5xl font-black tracking-tight my-2"><span class="text-blue-600 dark:text-blue-400">' + (labState.tens > 0 ? labState.tens : '') + '</span><span class="text-amber-500">' + labState.ones + '</span></div>' +
+          '<div class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)]">' +
+            (labState.tens * 10) + ' + ' + labState.ones + ' = <b>' + numVal + '</b>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (topicId === 'add') {
+    var a = labState.makeTenA;
+    var b = labState.makeTenB;
+    var need = 10 - a;
+    var move = Math.min(b, need);
+    var rem = b - move;
+    var total = a + b;
+    var frame1 = '';
+    for (var i = 0; i < 10; i++) {
+      var dot = '';
+      if (i < a) {
+        dot = '<div class="w-6 h-6 rounded-full bg-emerald-500 shadow-sm flex items-center justify-center text-white text-xs font-bold">●</div>';
+      } else if (i < a + move) {
+        dot = '<div class="w-6 h-6 rounded-full bg-amber-500 shadow-sm flex items-center justify-center text-white text-xs font-bold animate-pop">★</div>';
+      }
+      frame1 += '<div class="h-10 rounded-lg border border-[var(--border)] bg-[var(--background)] flex items-center justify-center">' + dot + '</div>';
+    }
+    var frame2 = '';
+    for (var j = 0; j < 10; j++) {
+      var dot2 = j < rem ? '<div class="w-6 h-6 rounded-full bg-amber-500 shadow-sm flex items-center justify-center text-white text-xs font-bold">★</div>' : '';
+      frame2 += '<div class="h-10 rounded-lg border border-[var(--border)] bg-[var(--background)] flex items-center justify-center">' + dot2 + '</div>';
+    }
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">🧪 กระดานบวกให้ครบสิบ · Make-10 Visualizer</span>' +
+        '<div class="flex gap-1.5">' +
+          '<button onclick="setMakeTen(8,5)" class="px-2.5 py-1 text-xs rounded-lg border border-[var(--border)] ' + (a===8&&b===5?'bg-emerald-600 text-white':'bg-[var(--card)]') + '">8 + 5</button>' +
+          '<button onclick="setMakeTen(7,6)" class="px-2.5 py-1 text-xs rounded-lg border border-[var(--border)] ' + (a===7&&b===6?'bg-emerald-600 text-white':'bg-[var(--card)]') + '">7 + 6</button>' +
+          '<button onclick="setMakeTen(9,4)" class="px-2.5 py-1 text-xs rounded-lg border border-[var(--border)] ' + (a===9&&b===4?'bg-emerald-600 text-white':'bg-[var(--card)]') + '">9 + 4</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' +
+        '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">' +
+          '<p class="text-xs font-semibold mb-2">กรอบสิบที่ 1 (เติม ★ อีก ' + move + ' ให้ครบ 10)</p>' +
+          '<div class="grid grid-cols-5 gap-1.5">' + frame1 + '</div>' +
+        '</div>' +
+        '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">' +
+          '<p class="text-xs font-semibold mb-2">กรอบสิบที่ 2 (เหลือ ★ อีก ' + rem + ')</p>' +
+          '<div class="grid grid-cols-5 gap-1.5">' + frame2 + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mt-3 p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center text-sm">' +
+        '<b>' + a + ' + ' + b + '</b> → แยก ' + b + ' เป็น <b>' + move + ' กับ ' + rem + '</b> → ได้ <b>(' + a + ' + ' + move + ') + ' + rem + ' = 10 + ' + rem + ' = <span class="text-emerald-600 dark:text-emerald-400 text-base">' + total + '</span></b>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (topicId === 'pat') {
+    var steps = [1, 2, 4, 7, 11, 16];
+    var gaps = ['+1', '+2', '+3', '+4', '+5'];
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400">🧪 แผนภาพก้าวกระโดด · Stepping-Stone Pattern</span>' +
+      '</div>' +
+      '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 overflow-x-auto">' +
+        '<p class="text-xs text-[var(--muted-foreground)] mb-3">ตัวอย่างแบบรูปที่ผลต่างเพิ่มขึ้นทีละ 1 (พบบ่อยใน SEAMO):</p>' +
+        '<div class="flex items-center justify-between min-w-[420px] gap-1 py-2">' +
+          steps.map(function(num, idx) {
+            var isLast = idx === steps.length - 1;
+            var node = '<div class="flex flex-col items-center">' +
+              '<div class="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg border-2 ' +
+              (isLast ? 'bg-purple-600 text-white border-purple-400 shadow-md' : 'bg-[var(--background)] border-purple-500/40') + '">' +
+              num + '</div>' +
+              '<span class="text-xs text-[var(--muted-foreground)] mt-1">ตัวที่ ' + (idx + 1) + '</span>' +
+            '</div>';
+            if (idx < gaps.length) {
+              node += '<div class="flex flex-col items-center -mt-5">' +
+                '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">' + gaps[idx] + '</span>' +
+                '<span class="text-purple-500 font-bold">→</span>' +
+              '</div>';
+            }
+            return node;
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (topicId === 'shape') {
+    var tab = labState.shapeTab;
+    var shapeSvg = '', shapeInfo = '';
+    if (tab === 'tri') {
+      shapeSvg = '<svg viewBox="0 0 160 130" class="w-36 h-32 mx-auto">' +
+        '<polygon points="80,18 22,112 138,112" fill="rgba(245, 158, 11, 0.2)" stroke="#F59E0B" stroke-width="4" stroke-linejoin="round"/>' +
+        '<circle cx="80" cy="18" r="6" fill="#EF4444"/><circle cx="22" cy="112" r="6" fill="#EF4444"/><circle cx="138" cy="112" r="6" fill="#EF4444"/>' +
+      '</svg>';
+      shapeInfo = '<b>สามเหลี่ยม (Triangle)</b>: มีเส้นตรง <b>3 ด้าน</b> และจุดสีแดง <b>3 มุม</b>';
+    } else if (tab === 'sq') {
+      shapeSvg = '<svg viewBox="0 0 160 130" class="w-36 h-32 mx-auto">' +
+        '<rect x="30" y="20" width="100" height="90" rx="2" fill="rgba(59, 130, 246, 0.2)" stroke="#3B82F6" stroke-width="4"/>' +
+        '<circle cx="30" cy="20" r="6" fill="#EF4444"/><circle cx="130" cy="20" r="6" fill="#EF4444"/><circle cx="30" cy="110" r="6" fill="#EF4444"/><circle cx="130" cy="110" r="6" fill="#EF4444"/>' +
+      '</svg>';
+      shapeInfo = '<b>สี่เหลี่ยม (Square / Rectangle)</b>: มีเส้นตรง <b>4 ด้าน</b> และจุดสีแดง <b>4 มุม</b>';
+    } else if (tab === 'cir') {
+      shapeSvg = '<svg viewBox="0 0 160 130" class="w-36 h-32 mx-auto">' +
+        '<circle cx="80" cy="65" r="46" fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-width="4"/>' +
+      '</svg>';
+      shapeInfo = '<b>วงกลม (Circle)</b>: เป็นเส้นโค้งเรียบ <b>0 ด้านตรง</b> และ <b>ไม่มีมุม (0 มุม)</b>';
+    } else {
+      shapeSvg = '<svg viewBox="0 0 160 130" class="w-36 h-32 mx-auto">' +
+        '<polygon points="45,45 100,45 120,25 65,25" fill="rgba(139, 92, 246, 0.35)" stroke="#8B5CF6" stroke-width="3" stroke-linejoin="round"/>' +
+        '<rect x="45" y="45" width="55" height="55" fill="rgba(139, 92, 246, 0.2)" stroke="#8B5CF6" stroke-width="3"/>' +
+        '<polygon points="100,45 120,25 120,80 100,100" fill="rgba(139, 92, 246, 0.45)" stroke="#8B5CF6" stroke-width="3" stroke-linejoin="round"/>' +
+      '</svg>';
+      shapeInfo = '<b>ลูกบาศก์ 3 มิติ (Cube)</b>: มี <b>6 หน้า</b>, <b>8 มุม</b> และ <b>12 ขอบ (Edges)</b>';
+    }
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">🧪 สำรวจรูปทรง · Interactive Shape Explorer</span>' +
+        '<div class="flex flex-wrap gap-1.5">' +
+          [['tri','สามเหลี่ยม'],['sq','สี่เหลี่ยม'],['cir','วงกลม'],['cube','ลูกบาศก์ 3D']].map(function(item) {
+            return '<button onclick="setShapeTab(\'' + item[0] + '\')" class="px-2.5 py-1 text-xs rounded-lg border border-[var(--border)] font-medium ' +
+              (tab === item[0] ? 'bg-amber-500 text-white' : 'bg-[var(--card)]') + '">' + item[1] + '</button>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+      '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 text-center">' +
+        shapeSvg +
+        '<p class="text-sm mt-2">' + shapeInfo + '</p>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (topicId === 'time') {
+    var startH = labState.clockStart;
+    var durH = labState.clockDur;
+    var endH = ((startH + durH - 1) % 12) + 1;
+    var startAngle = (startH % 12) * 30 - 90;
+    var endAngle = (endH % 12) * 30 - 90;
+    var sx = 60 + 28 * Math.cos(startAngle * Math.PI / 180);
+    var sy = 60 + 28 * Math.sin(startAngle * Math.PI / 180);
+    var ex = 60 + 28 * Math.cos(endAngle * Math.PI / 180);
+    var ey = 60 + 28 * Math.sin(endAngle * Math.PI / 180);
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400">🧪 นาฬิกาและเหรียญไทย · Clock & Coins</span>' +
+        '<div class="flex gap-1.5">' +
+          '<button onclick="adjustClock(1)" class="px-2.5 py-1 text-xs rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)]">+1 ชั่วโมง</button>' +
+          '<button onclick="adjustClock(2)" class="px-2.5 py-1 text-xs rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)]">+2 ชั่วโมง</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">' +
+        '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 flex items-center justify-around">' +
+          '<div class="text-center">' +
+            '<svg viewBox="0 0 120 120" class="w-24 h-24 mx-auto">' +
+              '<circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="4"/>' +
+              '<text x="60" y="22" text-anchor="middle" font-size="11" fill="currentColor">12</text>' +
+              '<text x="98" y="64" text-anchor="middle" font-size="11" fill="currentColor">3</text>' +
+              '<text x="60" y="104" text-anchor="middle" font-size="11" fill="currentColor">6</text>' +
+              '<text x="22" y="64" text-anchor="middle" font-size="11" fill="currentColor">9</text>' +
+              '<line x1="60" y1="60" x2="60" y2="24" stroke="#64748B" stroke-width="2.5" stroke-linecap="round"/>' +
+              '<line x1="60" y1="60" x2="' + sx + '" y2="' + sy + '" stroke="#E11D48" stroke-width="4" stroke-linecap="round"/>' +
+              '<circle cx="60" cy="60" r="3.5" fill="#E11D48"/>' +
+            '</svg>' +
+            '<span class="text-xs font-bold">เริ่ม ' + startH + ':00 น.</span>' +
+          '</div>' +
+          '<div class="text-center font-bold text-rose-500 text-sm">+' + durH + ' ชม.<br>→</div>' +
+          '<div class="text-center">' +
+            '<svg viewBox="0 0 120 120" class="w-24 h-24 mx-auto">' +
+              '<circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-width="4"/>' +
+              '<text x="60" y="22" text-anchor="middle" font-size="11" fill="currentColor">12</text>' +
+              '<text x="98" y="64" text-anchor="middle" font-size="11" fill="currentColor">3</text>' +
+              '<text x="60" y="104" text-anchor="middle" font-size="11" fill="currentColor">6</text>' +
+              '<text x="22" y="64" text-anchor="middle" font-size="11" fill="currentColor">9</text>' +
+              '<line x1="60" y1="60" x2="60" y2="24" stroke="#64748B" stroke-width="2.5" stroke-linecap="round"/>' +
+              '<line x1="60" y1="60" x2="' + ex + '" y2="' + ey + '" stroke="#10B981" stroke-width="4" stroke-linecap="round"/>' +
+              '<circle cx="60" cy="60" r="3.5" fill="#10B981"/>' +
+            '</svg>' +
+            '<span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">สิ้นสุด ' + endH + ':00 น.</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5 text-center">' +
+          '<p class="text-xs font-semibold mb-2">ตัวอย่างการรวมเหรียญ: 5 + 5 + 2 + 1 บาท</p>' +
+          '<div class="flex items-center justify-center gap-2 my-2">' +
+            '<div class="w-11 h-11 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center font-bold text-sm">5฿</div>' +
+            '<div class="w-11 h-11 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center font-bold text-sm">5฿</div>' +
+            '<div class="w-9 h-9 rounded-full bg-slate-400/20 border-2 border-slate-400 flex items-center justify-center font-bold text-xs">2฿</div>' +
+            '<div class="w-8 h-8 rounded-full bg-slate-400/20 border-2 border-slate-400 flex items-center justify-center font-bold text-xs">1฿</div>' +
+          '</div>' +
+          '<p class="text-xs text-[var(--muted-foreground)]">(5 + 5 = 10) + 2 + 1 = <b class="text-rose-500 text-sm">13 บาท</b></p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (topicId === 'meas') {
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">🧪 เปรียบเทียบความยาวด้วยไม้บรรทัด · Ruler Comparison</span>' +
+      '</div>' +
+      '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">' +
+        '<div>' +
+          '<div class="flex justify-between text-xs font-semibold mb-1"><span>🎀 ริบบิ้น A (12 cm)</span><span>12 cm</span></div>' +
+          '<div class="w-full bg-[var(--background)] rounded-lg h-6 p-1 border border-[var(--border)]">' +
+            '<div class="bg-cyan-500 h-full rounded" style="width: 85.7%"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="flex justify-between text-xs font-semibold mb-1"><span>🎀 ริบบิ้น B (9 cm)</span><span>9 cm</span></div>' +
+          '<div class="w-full bg-[var(--background)] rounded-lg h-6 p-1 border border-[var(--border)]">' +
+            '<div class="bg-amber-500 h-full rounded" style="width: 64.2%"></div>' +
+          '</div>' +
+        '</div>' +
+        '<p class="text-xs text-center pt-1">ริบบิ้น A ยาวกว่าริบบิ้น B อยู่ <b>12 − 9 = <span class="text-cyan-600 dark:text-cyan-400 text-sm">3 cm</span></b></p>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (topicId === 'logic') {
+    return '<div class="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5 my-4">' +
+      '<div class="mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400">🧪 แผนภาพการเข้าแถว · Queue Diagram</span>' +
+      '</div>' +
+      '<div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 text-center">' +
+        '<p class="text-xs text-[var(--muted-foreground)] mb-3">"แอนยืนเป็นคนที่ 3 จากหัวแถว และมีเพื่อนยืนข้างหลังแอนอีก 2 คน"</p>' +
+        '<div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap my-2">' +
+          '<div class="px-2 py-1 rounded bg-[var(--background)] border border-[var(--border)] text-xs font-bold">🚩 หัวแถว</div>' +
+          '<div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-blue-500/15 border border-blue-500/40 flex items-center justify-center text-lg">🧒</div><span class="text-xs mt-1">คนที่ 1</span></div>' +
+          '<div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-blue-500/15 border border-blue-500/40 flex items-center justify-center text-lg">👦</div><span class="text-xs mt-1">คนที่ 2</span></div>' +
+          '<div class="flex flex-col items-center"><div class="w-11 h-11 rounded-full bg-orange-500 text-white border-2 border-orange-300 shadow flex items-center justify-center text-lg font-bold">👧</div><span class="text-xs font-bold text-orange-600 dark:text-orange-400 mt-1">แอน (ที่ 3)</span></div>' +
+          '<div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-lg">🧒</div><span class="text-xs mt-1">หลัง 1</span></div>' +
+          '<div class="flex flex-col items-center"><div class="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-lg">👦</div><span class="text-xs mt-1">หลัง 2</span></div>' +
+        '</div>' +
+        '<p class="text-xs mt-2">รวมทั้งแถว = ข้างหน้า <b>2</b> + แอน <b>1</b> + ข้างหลัง <b>2</b> = <b class="text-orange-600 dark:text-orange-400 text-sm">5 คน</b></p>' +
+      '</div>' +
+    '</div>';
+  }
+  return '';
+}
+
+function adjustLab(field, delta) {
+  playSound('click');
+  if (field === 'tens') labState.tens = Math.max(1, Math.min(9, labState.tens + delta));
+  else if (field === 'ones') labState.ones = Math.max(0, Math.min(9, labState.ones + delta));
+  render();
+}
+function setMakeTen(a, b) { playSound('click'); labState.makeTenA = a; labState.makeTenB = b; render(); }
+function setShapeTab(tab) { playSound('click'); labState.shapeTab = tab; render(); }
+function adjustClock(dur) { playSound('click'); labState.clockDur = dur; render(); }
+
+/* ============================================================================
+   REVIEW PORTAL VIEWS
+   ============================================================================ */
+function go(v, t) {
+  playSound('click');
+  view = v;
+  if (t !== undefined) tp = t;
+  qi = 0;
+  score = 0;
+  if (v === 'quiz') {
+    order = shuffle(TOPICS[tp].qs.map(function(_, i) { return i; }));
+  }
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleGuide() {
+  playSound('click');
+  guideOpen = !guideOpen;
+  render();
+}
+
+function homeView() {
+  var maxTopicStars = TOPICS.reduce(function(s, t) { return s + t.qs.length; }, 0);
+  var earnedTopicStars = TOPICS.reduce(function(s, t) { return s + Math.min(saved[t.id] || 0, t.qs.length); }, 0);
+  var earnedShortStars = Math.min(saved.short || 0, SHORT.length);
+  var totalPossible = maxTopicStars + SHORT.length;
+  var totalEarned = earnedTopicStars + earnedShortStars;
+  var pct = Math.round((totalEarned / totalPossible) * 100);
+
+  var html = '';
+
+  html += '<section class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm mb-6">' +
+    '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">' +
+      '<div>' +
+        '<div class="flex items-center gap-2">' +
+          '<span class="text-2xl">🌟</span>' +
+          '<h2 class="text-base sm:text-lg font-bold">' + TInline({ th: 'ความก้าวหน้าการทบทวนบทเรียน', en: 'Your Lesson Review Progress' }) + '</h2>' +
+        '</div>' +
+        '<p class="text-xs sm:text-sm text-[var(--muted-foreground)] mt-1">' +
+          TInline({ th: 'สะสมดาวจากการทำโจทย์ทั้ง 7 บทเรียน และชุดตอบสั้น', en: 'Collect stars across all 7 topics and the Short Answer challenge' }) +
+        '</p>' +
+      '</div>' +
+      '<div class="flex items-center gap-3">' +
+        '<div class="text-right">' +
+          '<div class="text-xl sm:text-2xl font-black text-amber-500">★ ' + totalEarned + ' <span class="text-sm font-medium text-[var(--muted-foreground)]">/ ' + totalPossible + '</span></div>' +
+          '<div class="text-xs text-[var(--muted-foreground)]">' + pct + '% Completed</div>' +
+        '</div>' +
+        '<button onclick="toggleGuide()" class="px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] text-xs sm:text-sm font-semibold transition">' +
+          '📘 ' + (mode === 'en' ? 'Parent Guide' : 'คำแนะนำครู/ผู้ปกครอง') +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="w-full h-2.5 bg-[var(--background)] rounded-full overflow-hidden mt-4 border border-[var(--border)]">' +
+      '<div class="h-full bg-gradient-to-r from-blue-500 via-emerald-500 to-amber-500 transition-all duration-500" style="width:' + pct + '%"></div>' +
+    '</div>';
+
+  if (guideOpen) {
+    html += '<div class="mt-4 pt-4 border-t border-[var(--border)] bg-amber-500/5 rounded-xl p-4 text-sm space-y-2 animate-pop">' +
+      '<div class="font-bold text-amber-600 dark:text-amber-400 flex items-center justify-between">' +
+        '<span>💡 สรุปสำหรับผู้ปกครองและครู (Executive Summary)</span>' +
+        (totalEarned > 0 ? '<button onclick="resetProgress()" class="text-xs underline text-rose-500 hover:text-rose-600">ล้างดาวเริ่มต้นใหม่ (Reset)</button>' : '') +
+      '</div>' +
+      '<ul class="list-disc pl-5 space-y-1.5 text-xs sm:text-sm">' +
+        '<li>' + T({ th: 'ทบทวน 7 หัวข้อหลักตามโครงสร้าง SEAMO Paper A (ป.1–2) พร้อมสื่อภาพอินเทอร์แอคทีฟในทุกบทเรียน', en: 'Covers 7 core SEAMO Paper A (Grades 1–2) topics with interactive visual manipulatives.' }) + '</li>' +
+        '<li>' + T({ th: 'แต่ละบทมี สรุปหลักคิด + สื่อทดลองกดเล่นได้ + โจทย์ฝึกหัด 5 ข้อพร้อมคำใบ้ (Hint) และเฉลยละเอียด', en: 'Each topic includes a concise lesson, an interactive lab, and 5 practice questions with hints and step-by-step solutions.' }) + '</li>' +
+        '<li>' + T({ th: 'เมื่อทบทวนครบแล้ว สามารถสลับไปที่แท็บ "🎲 แบบทดสอบสุ่ม 25 ข้อ" ด้านบน เพื่อฝึกทำข้อสอบฉบับเต็ม 100 คะแนนที่ไม่ซ้ำเดิม!', en: 'Switch to the "🎲 Random Mock Test (25 Qs)" tab above to generate unlimited 100-point practice papers!' }) + '</li>' +
+      '</ul>' +
+    '</div>';
+  }
+  html += '</section>';
+
+  html += '<div class="mb-3 flex items-center justify-between">' +
+    '<h2 class="text-base sm:text-lg font-bold">' + TInline({ th: '📚 เลือกหัวข้อที่ต้องการทบทวน (7 บทเรียน)', en: '📚 Choose a Review Topic (7 Modules)' }) + '</h2>' +
+  '</div>';
+
+  html += '<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">';
+  TOPICS.forEach(function(t, idx) {
+    var stCount = Math.min(saved[t.id] || 0, t.qs.length);
+    html += '<div class="topic-card bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden">' +
+      '<div>' +
+        '<div class="flex items-start justify-between gap-2 mb-3">' +
+          '<div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm" style="background:' + t.bgSoft + '; border: 1px solid ' + t.accent + '33">' +
+            t.ic +
+          '</div>' +
+          '<span class="text-xs font-bold px-2.5 py-1 rounded-full" style="background:' + t.bgSoft + '; color:' + t.accent + '">' + t.badge + '</span>' +
+        '</div>' +
+        '<h3 class="font-bold text-base sm:text-lg leading-snug mb-1">' + T(t.name) + '</h3>' +
+        '<p class="text-xs text-[var(--muted-foreground)] mb-4">' + T(t.desc) + '</p>' +
+      '</div>' +
+      '<div>' +
+        '<div class="flex items-center justify-between pt-3 border-t border-[var(--border)] mb-3">' +
+          '<span class="text-xs font-medium text-[var(--muted-foreground)]">' + stCount + '/' + t.qs.length + ' ดาว</span>' +
+          renderStars(stCount, t.qs.length) +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<button onclick="go(\'lesson\',' + idx + ')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] transition">' +
+            '📖 ' + (mode === 'en' ? 'Lesson' : 'บทเรียน') +
+          '</button>' +
+          '<button onclick="go(\'quiz\',' + idx + ')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:opacity-95" style="background:' + t.accent + '">' +
+            '✏️ ' + (mode === 'en' ? 'Practise' : 'ทำโจทย์') +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</section>';
+
+  // Bottom Dual Cards: Short Answer + Random 25-Q Mock Exam Banner
+  html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
+    '<section class="bg-[var(--card)] border-2 border-emerald-500/30 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4">' +
+      '<div class="space-y-1.5">' +
+        '<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold">' +
+          '🏅 Short Answer Warm-up · 5 ข้อ' +
+        '</div>' +
+        '<h3 class="text-lg font-bold">' + T({ th: 'ฝึกชุดตอบสั้น (5 ข้อ)', en: 'Short Answer Set (5 Qs)' }) + '</h3>' +
+        '<p class="text-xs text-[var(--muted-foreground)]">' +
+          T({ th: 'ฝึกคิดเลขและพิมพ์คำตอบด้วยตัวเองพร้อมแป้นตัวเลขบนหน้าจอ', en: 'Practise typing numeric answers with an interactive keypad.' }) +
+        '</p>' +
+        '<div class="pt-1 flex items-center gap-2">' +
+          renderStars(earnedShortStars, SHORT.length) +
+          '<span class="text-xs font-semibold text-[var(--muted-foreground)]">(' + earnedShortStars + '/' + SHORT.length + ')</span>' +
+        '</div>' +
+      '</div>' +
+      '<button onclick="go(\'short\')" class="w-full px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-sm transition">' +
+        '🚀 ' + (mode === 'en' ? 'Start Short Answer (5 Qs)' : 'เริ่มทำชุดตอบสั้น 5 ข้อ') + ' →' +
+      '</button>' +
+    '</section>' +
+
+    '<section class="bg-[var(--card)] border-2 border-indigo-500/30 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4">' +
+      '<div class="space-y-1.5">' +
+        '<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-xs font-bold">' +
+          '🎲 Full Paper Simulation · 100 คะแนน' +
+        '</div>' +
+        '<h3 class="text-lg font-bold">' + T({ th: 'แบบทดสอบสุ่ม 25 ข้อ (ไม่ซ้ำเดิม)', en: 'Random 25-Question Mock Test' }) + '</h3>' +
+        '<p class="text-xs text-[var(--muted-foreground)]">' +
+          T({ th: 'สุ่มข้อสอบใหม่ทุกครั้ง (ปรนัย 20 ข้อ + ตอบสั้น 5 ข้อ) เลือกระดับ ป.1 หรือ ป.2 มีโหมดฝึกและโหมดจำลองสอบ 75 นาที', en: 'Generates a fresh 25-question paper (20 MC + 5 Short Answer) for Grade 1 or Grade 2 with topic analytics.' }) +
+        '</p>' +
+      '</div>' +
+      '<button onclick="switchPortal(\'mock\')" class="w-full px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-sm transition">' +
+        '🎲 ' + (mode === 'en' ? 'Open Random Test Generator' : 'ไปที่แบบทดสอบสุ่ม 25 ข้อ') + ' →' +
+      '</button>' +
+    '</section>' +
+  '</div>';
+
+  return html;
+}
+
+function lessonView() {
+  var t = TOPICS[tp];
+  return '<div class="animate-pop space-y-5">' +
+    '<div class="flex items-center justify-between flex-wrap gap-2">' +
+      '<button onclick="go(\'home\')" class="px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)] text-xs sm:text-sm font-semibold transition">' +
+        '← ' + (mode === 'en' ? 'Back to Topics' : 'กลับหน้าหลัก') +
+      '</button>' +
+      '<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:' + t.bgSoft + '; color:' + t.accent + '">' +
+        t.badge + ' · ' + (tp + 1) + ' / ' + TOPICS.length +
+      '</span>' +
+    '</div>' +
+
+    '<div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-7 shadow-sm">' +
+      '<div class="flex items-center gap-4 mb-5 pb-4 border-b border-[var(--border)]">' +
+        '<div class="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shrink-0" style="background:' + t.bgSoft + '">' + t.ic + '</div>' +
+        '<div>' +
+          '<h2 class="text-xl sm:text-2xl font-extrabold">' + T(t.name) + '</h2>' +
+          '<p class="text-xs sm:text-sm text-[var(--muted-foreground)] mt-0.5">' + T(t.desc) + '</p>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">' +
+        t.keyPoints.map(function(kp) {
+          return '<div class="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">' +
+            '<h3 class="font-bold text-sm sm:text-base mb-2" style="color:' + t.accent + '">' + T(kp.title) + '</h3>' +
+            '<div class="text-sm leading-relaxed">' + T(kp.body) + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+
+      renderInteractiveLab(t.id) +
+
+      '<div class="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-[var(--border)] mt-5">' +
+        '<button onclick="go(\'home\')" class="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] text-sm font-semibold transition">' +
+          '← ' + (mode === 'en' ? 'All Topics' : 'ดูหัวข้ออื่น') +
+        '</button>' +
+        '<button onclick="go(\'quiz\',' + tp + ')" class="px-6 py-3 rounded-xl text-white font-bold text-sm sm:text-base shadow-sm transition hover:opacity-95" style="background:' + t.accent + '">' +
+          '✏️ ' + (mode === 'en' ? 'Start Practice Questions (' + t.qs.length + ' Qs)' : 'พร้อมแล้ว! ลองทำโจทย์ (' + t.qs.length + ' ข้อ)') + ' →' +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function quizView() {
+  var t = TOPICS[tp];
+  var q = t.qs[order[qi]];
+  var idx = shuffle(q.o.map(function(_, i) { return i; }));
+  window._cur = { q: q, idx: idx, answered: false };
+
+  var progressPct = Math.round((qi / t.qs.length) * 100);
+  var labels = ['A', 'B', 'C', 'D'];
+
+  return '<div class="animate-pop space-y-4">' +
+    '<div class="flex items-center justify-between gap-2">' +
+      '<button onclick="go(\'lesson\',' + tp + ')" class="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs sm:text-sm font-semibold hover:bg-[var(--secondary)]">' +
+        '← ' + (mode === 'en' ? 'Review Lesson' : 'ดูบทเรียน') +
+      '</button>' +
+      '<div class="text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">' +
+        '★ คะแนนรอบนี้: ' + score + ' / ' + t.qs.length +
+      '</div>' +
+    '</div>' +
+
+    '<div class="w-full h-2.5 bg-[var(--card)] rounded-full overflow-hidden border border-[var(--border)]">' +
+      '<div class="h-full transition-all duration-300" style="width:' + progressPct + '%; background:' + t.accent + '"></div>' +
+    '</div>' +
+
+    '<div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-7 shadow-sm">' +
+      '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">' +
+        '<span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full" style="background:' + t.bgSoft + '; color:' + t.accent + '">' +
+          t.ic + ' ' + TInline(t.name) +
+        '</span>' +
+        '<span class="text-xs font-bold text-[var(--muted-foreground)]">' +
+          (mode === 'en' ? 'Question ' : 'ข้อที่ ') + (qi + 1) + ' / ' + t.qs.length +
+        '</span>' +
+      '</div>' +
+
+      '<div class="text-lg sm:text-xl font-bold my-4 leading-snug">' + T(q.t) + '</div>' +
+
+      (q.hint ? (
+        '<div class="mb-4">' +
+          '<button id="hint-btn" onclick="showHint()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition">' +
+            '💡 ' + (mode === 'en' ? 'Need a Hint?' : 'ขอดูคำใบ้ (Hint)') +
+          '</button>' +
+          '<div id="hint-box" class="hidden mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs sm:text-sm">' +
+            '<b>💡 คำใบ้:</b> ' + T(q.hint) +
+          '</div>' +
+        '</div>'
+      ) : '') +
+
+      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-2">' +
+        idx.map(function(i, k) {
+          return '<button id="o' + k + '" onclick="pick(' + k + ')" class="opt-btn text-left p-4 rounded-xl border-2 border-[var(--border)] bg-[var(--background)] hover:border-blue-500 flex items-center gap-3.5">' +
+            '<span class="w-8 h-8 rounded-lg bg-[var(--card)] border border-[var(--border)] flex items-center justify-center font-bold text-sm shrink-0">' + labels[k] + '</span>' +
+            '<span class="text-base sm:text-lg font-bold">' + T(q.o[i]) + '</span>' +
+          '</button>';
+        }).join('') +
+      '</div>' +
+
+      '<div id="fb" class="hidden mt-5 p-4 rounded-xl border text-sm sm:text-base"></div>' +
+
+      '<div id="nx" class="hidden mt-4 justify-end">' +
+        '<button onclick="nextQ()" class="px-6 py-3 rounded-xl text-white font-bold text-sm sm:text-base shadow-sm transition" style="background:' + t.accent + '">' +
+          (qi + 1 < t.qs.length ? (mode === 'en' ? 'Next Question →' : 'ข้อต่อไป →') : (mode === 'en' ? 'See Results 🏆' : 'ดูผลคะแนน 🏆')) +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function showHint() {
+  playSound('click');
+  var hb = document.getElementById('hint-box');
+  var btn = document.getElementById('hint-btn');
+  if (hb) hb.classList.remove('hidden');
+  if (btn) btn.classList.add('hidden');
+}
+
+function pick(k) {
+  var c = window._cur;
+  if (!c || c.answered) return;
+  c.answered = true;
+  var q = c.q;
+  var ok = c.idx[k] === q.a;
+  if (ok) { score++; playSound('correct'); } else { playSound('wrong'); }
+
+  c.idx.forEach(function(i, j) {
+    var b = document.getElementById('o' + j);
+    if (!b) return;
+    b.disabled = true;
+    if (i === q.a) {
+      b.className = 'opt-btn text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-500/15 flex items-center gap-3.5';
+    } else if (j === k) {
+      b.className = 'opt-btn text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-500/15 flex items-center gap-3.5';
+    } else {
+      b.className = 'opt-btn text-left p-4 rounded-xl border border-[var(--border)] bg-[var(--background)] opacity-50 flex items-center gap-3.5';
+    }
+  });
+
+  var fb = document.getElementById('fb');
+  fb.classList.remove('hidden');
+  fb.className = 'mt-5 p-4 rounded-xl border animate-pop ' +
+    (ok ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-amber-500/10 border-amber-500/40');
+  fb.innerHTML = '<div class="font-bold text-base mb-1">' +
+    (ok ? '✅ ' + TInline({ th: 'เก่งมาก! ตอบถูกต้อง', en: 'Awesome! Correct Answer!' })
+        : '💡 ' + TInline({ th: 'มาดูวิธีคิดกันนะ', en: 'Let’s look at the step-by-step reasoning' })) +
+    '</div><div class="text-sm leading-relaxed">' + T(q.e) + '</div>';
+
+  var nx = document.getElementById('nx');
+  nx.classList.remove('hidden');
+  nx.classList.add('flex');
+}
+
+function nextQ() {
+  playSound('click');
+  var t = TOPICS[tp];
+  qi++;
+  if (qi >= t.qs.length) {
+    saved[t.id] = Math.max(saved[t.id] || 0, score);
+    save();
+    view = 'result';
+    if (score >= t.qs.length - 1) { playSound('fanfare'); launchConfetti(); }
+  }
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resultView() {
+  var t = TOPICS[tp];
+  var n = t.qs.length;
+  var msg = score === n
+    ? { th: 'ยอดเยี่ยมมาก! ตอบถูกครบทุกข้อเลย 🎉', en: 'Perfect Score! You mastered every question! 🎉' }
+    : score >= n - 1
+    ? { th: 'เก่งมาก! เกือบเต็มแล้ว อีกนิดเดียว!', en: 'Great job! Almost a perfect score!' }
+    : { th: 'พยายามได้ดีมาก! ลองทบทวนบทเรียนแล้วมาเก็บดาวเพิ่มนะ', en: 'Good effort! Review the lesson and try again for more stars.' };
+
+  return '<div class="animate-pop bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 sm:p-8 text-center shadow-sm max-w-xl mx-auto my-4">' +
+    '<div class="w-20 h-20 rounded-3xl mx-auto flex items-center justify-center text-5xl mb-4" style="background:' + t.bgSoft + '">' + t.ic + '</div>' +
+    '<span class="text-xs font-bold px-3 py-1 rounded-full" style="background:' + t.bgSoft + '; color:' + t.accent + '">' + TInline(t.name) + '</span>' +
+    '<h2 class="text-xl sm:text-2xl font-extrabold mt-3 mb-2">' + T(msg) + '</h2>' +
+    '<div class="my-4 flex justify-center scale-125">' + renderStars(score, n) + '</div>' +
+    '<p class="text-2xl font-black mb-6">' + score + ' <span class="text-base font-normal text-[var(--muted-foreground)]">/ ' + n + ' คะแนน</span></p>' +
+    '<div class="flex flex-wrap items-center justify-center gap-3">' +
+      '<button onclick="go(\'lesson\',' + tp + ')" class="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] font-semibold text-sm">' +
+        '📖 ' + (mode === 'en' ? 'Review Lesson' : 'อ่านบทเรียน') +
+      '</button>' +
+      '<button onclick="go(\'quiz\',' + tp + ')" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">' +
+        '🔄 ' + (mode === 'en' ? 'Try Again' : 'ทำโจทย์อีกรอบ') +
+      '</button>' +
+      '<button onclick="go(\'home\')" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">' +
+        '🏠 ' + (mode === 'en' ? 'Home' : 'กลับหน้าหลัก') +
+      '</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function shortQView() {
+  var q = SHORT[qi];
+  var progressPct = Math.round((qi / SHORT.length) * 100);
+  window._saAnswered = false;
+
+  return '<div class="animate-pop space-y-4">' +
+    '<div class="flex items-center justify-between gap-2">' +
+      '<button onclick="go(\'home\')" class="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs sm:text-sm font-semibold hover:bg-[var(--secondary)]">' +
+        '← ' + (mode === 'en' ? 'Back Home' : 'กลับหน้าหลัก') +
+      '</button>' +
+      '<div class="text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">' +
+        '🏅 Short Answer · ' + (qi + 1) + ' / ' + SHORT.length +
+      '</div>' +
+    '</div>' +
+
+    '<div class="w-full h-2.5 bg-[var(--card)] rounded-full overflow-hidden border border-[var(--border)]">' +
+      '<div class="h-full bg-emerald-600 transition-all duration-300" style="width:' + progressPct + '%"></div>' +
+    '</div>' +
+
+    '<div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-7 shadow-sm">' +
+      '<p class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">ข้อสอบเติมคำตอบ (Short Answer) · ข้อที่ ' + (qi + 1) + '</p>' +
+      '<div class="text-lg sm:text-xl font-bold mb-4 leading-snug">' + T(q.t) + '</div>' +
+
+      (q.hint ? (
+        '<div class="mb-4">' +
+          '<button id="hint-btn" onclick="showHint()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition">' +
+            '💡 ' + (mode === 'en' ? 'Need a Hint?' : 'ขอดูคำใบ้ (Hint)') +
+          '</button>' +
+          '<div id="hint-box" class="hidden mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs sm:text-sm">' +
+            '<b>💡 คำใบ้:</b> ' + T(q.hint) +
+          '</div>' +
+        '</div>'
+      ) : '') +
+
+      '<div class="max-w-sm mx-auto my-4">' +
+        '<div class="flex gap-2 mb-3">' +
+          '<input id="sa" type="text" inputmode="numeric" placeholder="' + (mode === 'en' ? 'Type answer...' : 'พิมพ์หรือกดตัวเลข...') + '" ' +
+            'onkeydown="if(event.key===\'Enter\')checkSA()" ' +
+            'class="w-full text-center text-2xl font-black py-3 px-4 rounded-xl border-2 border-[var(--border)] bg-[var(--background)] focus:border-emerald-500 focus:outline-none">' +
+          '<button id="ck" onclick="checkSA()" class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shrink-0 shadow-sm">' +
+            (mode === 'en' ? 'Check' : 'ตรวจคำตอบ') +
+          '</button>' +
+        '</div>' +
+
+        '<div id="numpad" class="grid grid-cols-5 gap-2 p-2.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">' +
+          [1,2,3,4,5,6,7,8,9,0].map(function(n) {
+            return '<button type="button" onclick="tapNum(\'' + n + '\')" class="numpad-btn py-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] hover:border-emerald-500 font-bold text-lg shadow-sm">' + n + '</button>';
+          }).join('') +
+          '<button type="button" onclick="tapClear()" class="col-span-5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs font-semibold text-[var(--muted-foreground)] hover:text-rose-500">⌫ ลบตัวเลข (Clear)</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div id="fb" class="hidden mt-4 p-4 rounded-xl border"></div>' +
+      '<div id="nx" class="hidden mt-4 justify-end">' +
+        '<button onclick="nextSA()" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm sm:text-base shadow-sm">' +
+          (qi + 1 < SHORT.length ? (mode === 'en' ? 'Next Question →' : 'ข้อต่อไป →') : (mode === 'en' ? 'See Final Score 🏅' : 'ดูผลคะแนน 🏅')) +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function tapNum(digit) {
+  if (window._saAnswered) return;
+  playSound('click');
+  var el = document.getElementById('sa');
+  if (el && !el.disabled && el.value.length < 6) el.value += digit;
+}
+function tapClear() {
+  if (window._saAnswered) return;
+  playSound('click');
+  var el = document.getElementById('sa');
+  if (el && !el.disabled) el.value = el.value.slice(0, -1);
+}
+function checkSA() {
+  var el = document.getElementById('sa');
+  if (!el || el.disabled || window._saAnswered) return;
+  var v = el.value.trim();
+  if (!v) return;
+  window._saAnswered = true;
+  var q = SHORT[qi];
+  var ok = v === q.a;
+  if (ok) { score++; playSound('correct'); } else { playSound('wrong'); }
+  el.disabled = true;
+  var ck = document.getElementById('ck'); if (ck) ck.style.display = 'none';
+  var np = document.getElementById('numpad'); if (np) np.style.display = 'none';
+  var fb = document.getElementById('fb');
+  fb.classList.remove('hidden');
+  fb.className = 'mt-4 p-4 rounded-xl border animate-pop ' +
+    (ok ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-amber-500/10 border-amber-500/40');
+  fb.innerHTML = '<div class="font-bold text-base mb-1">' +
+    (ok ? '✅ ' + TInline({ th: 'ถูกต้อง! คำตอบคือ ' + q.a, en: 'Correct! The answer is ' + q.a })
+        : '💡 ' + TInline({ th: 'คำตอบที่ถูกต้องคือ ' + q.a, en: 'The correct answer is ' + q.a })) +
+    '</div><div class="text-sm leading-relaxed">' + T(q.e) + '</div>';
+  var nx = document.getElementById('nx');
+  nx.classList.remove('hidden');
+  nx.classList.add('flex');
+}
+function nextSA() {
+  playSound('click');
+  qi++;
+  if (qi >= SHORT.length) {
+    saved.short = Math.max(saved.short || 0, score);
+    save();
+    view = 'shortres';
+    if (score >= SHORT.length - 1) { playSound('fanfare'); launchConfetti(); }
+  }
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function shortResView() {
+  return '<div class="animate-pop bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 sm:p-8 text-center shadow-sm max-w-xl mx-auto my-4">' +
+    '<div class="w-20 h-20 rounded-3xl mx-auto bg-emerald-500/15 flex items-center justify-center text-5xl mb-4">🏅</div>' +
+    '<h2 class="text-xl sm:text-2xl font-extrabold mb-2">' + T({ th: 'จบชุดตอบสั้น (Short Answer Completed!)', en: 'Short Answer Challenge Completed!' }) + '</h2>' +
+    '<div class="my-4 flex justify-center scale-125">' + renderStars(score, SHORT.length) + '</div>' +
+    '<p class="text-2xl font-black mb-6">' + score + ' <span class="text-base font-normal text-[var(--muted-foreground)]">/ ' + SHORT.length + ' คะแนน</span></p>' +
+    '<div class="flex flex-wrap items-center justify-center gap-3">' +
+      '<button onclick="go(\'short\')" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm">' +
+        '🔄 ' + (mode === 'en' ? 'Practise Again' : 'ทำชุดตอบสั้นอีกรอบ') +
+      '</button>' +
+      '<button onclick="go(\'home\')" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">' +
+        '🏠 ' + (mode === 'en' ? 'Back Home' : 'กลับหน้าหลัก') +
+      '</button>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ============================================================================
+   MOCK TEST PORTAL VIEWS (25-QUESTION GENERATOR)
+   ============================================================================ */
+function setCfg(k, v) {
+  playSound('click');
+  cfg[k] = v;
+  render();
+}
+
+function renderSeg(name, val, items) {
+  return '<div class="flex flex-wrap gap-2">' + items.map(function(it) {
+    var on = String(cfg[name]) === String(it[0]);
+    return '<button type="button" onclick="setCfg(\'' + name + '\',' + (typeof it[0] === 'string' ? "'" + it[0] + "'" : it[0]) + ')" ' +
+      'class="px-4 py-2.5 rounded-xl border-2 text-xs sm:text-sm font-bold transition ' +
+      (on ? 'border-indigo-600 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:border-indigo-400') + '">' +
+      it[1] + '</button>';
+  }).join('') + '</div>';
+}
+
+function renderMockSetup() {
+  var html = '<div class="animate-pop space-y-6">' +
+    // Overview Banner
+    '<section class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-sm">' +
+      '<div class="flex items-start gap-4 flex-wrap sm:flex-nowrap">' +
+        '<div class="w-14 h-14 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-3xl shrink-0">🎲</div>' +
+        '<div class="space-y-2">' +
+          '<div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs font-bold">' +
+            '✨ สร้างข้อสอบใหม่ทุกครั้ง · 20 ปรนัย + 5 ตอบสั้น = 100 คะแนน' +
+          '</div>' +
+          '<h2 class="text-lg sm:text-xl font-extrabold">' + T(S('ระบบสุ่มแบบทดสอบ SEAMO Paper A (ไม่ซ้ำเดิม)', 'SEAMO Paper A Random Test Generator')) + '</h2>' +
+          '<ul class="list-disc pl-5 text-xs sm:text-sm text-[var(--muted-foreground)] space-y-1">' +
+            '<li>' + T(S('ข้อ 1–10 (ข้อละ 3 คะแนน) · ข้อ 11–20 (ข้อละ 4 คะแนน) · ข้อ 21–25 ตอบสั้น (ข้อละ 6 คะแนน) รวม 100 คะแนนเต็ม', 'Q1–10 (3 pts) · Q11–20 (4 pts) · Q21–25 Short Answer (6 pts) = 100 points total.')) + '</li>' +
+            '<li>' + T(S('สุ่มตัวเลขและเงื่อนไขใหม่ทุกครั้ง พร้อมจดจำโจทย์ที่เคยทำในเครื่องนี้เพื่อไม่ให้ซ้ำเดิม', 'Randomises numbers & scenarios every time and remembers seen items on this device.')) + '</li>' +
+            '<li>' + T(S('สามารถนำ "รหัสชุดข้อสอบ (Test Code)" ไปแชร์ให้เพื่อนหรือนักเรียนทำข้อสอบชุดเดียวกันได้', 'Share a Test Code so multiple students can take the exact same generated paper.')) + '</li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+
+    // Configuration Card
+    '<section class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-7 shadow-sm space-y-5">' +
+      '<h3 class="text-base sm:text-lg font-bold border-b border-[var(--border)] pb-3">⚙️ ' + TInline(S('ตั้งค่าแบบทดสอบก่อนเริ่ม', 'Configure Your Test')) + '</h3>' +
+
+      '<div class="grid grid-cols-1 md:grid-cols-2 gap-5">' +
+        '<div>' +
+          '<label class="block text-sm font-bold mb-2">🎓 ' + TInline(S('ระดับชั้น', 'Grade Level')) + '</label>' +
+          renderSeg('level', cfg.level, [[1, 'ป.1 · Grade 1'], [2, 'ป.2 · Grade 2']]) +
+        '</div>' +
+
+        '<div>' +
+          '<label class="block text-sm font-bold mb-2">🎯 ' + TInline(S('โหมดการทำข้อสอบ', 'Test Mode')) + '</label>' +
+          renderSeg('mode', cfg.mode, [['practice', '💡 โหมดฝึก (เฉลยทันที · Practice)'], ['exam', '⏱️ จำลองสอบ (เฉลยตอนส่ง · Exam)']]) +
+          (cfg.mode === 'exam' ? (
+            '<label class="inline-flex items-center gap-2 mt-3 text-xs sm:text-sm font-medium cursor-pointer">' +
+              '<input type="checkbox" class="w-4 h-4 rounded accent-indigo-600" ' + (cfg.timer ? 'checked' : '') + ' onchange="cfg.timer=this.checked">' +
+              '<span>' + TInline(S('จับเวลา 75 นาที (ตามเวลาสอบจริง)', 'Enable 75-minute countdown timer')) + '</span>' +
+            '</label>'
+          ) : '') +
+        '</div>' +
+
+        '<div>' +
+          '<label class="block text-sm font-bold mb-2">🖥️ ' + TInline(S('รูปแบบการแสดงผล', 'Display Layout')) + '</label>' +
+          renderSeg('layout', cfg.layout, [['all', '📄 ดูทั้งฉบับ 25 ข้อ (Full Paper)'], ['focus', '🔍 ทำทีละข้อ (Focus 1-by-1)']]) +
+        '</div>' +
+
+        '<div>' +
+          '<label class="block text-sm font-bold mb-2">🔑 ' + TInline(S('รหัสชุดข้อสอบ (เว้นว่างเพื่อสุ่มชุดใหม่)', 'Test Code (optional)')) + '</label>' +
+          '<input type="text" id="seed" value="' + cfg.seed + '" placeholder="เช่น k7m2xa" oninput="cfg.seed=this.value.trim()" ' +
+            'class="w-full max-w-xs px-3.5 py-2 rounded-xl border-2 border-[var(--border)] bg-[var(--background)] text-sm font-mono focus:border-indigo-500 focus:outline-none">' +
+          '<p class="text-xs text-[var(--muted-foreground)] mt-1">' +
+            TInline(S('เว้นว่าง = สุ่มชุดใหม่ที่ไม่เคยทำ · ใส่รหัส = เปิดชุดข้อสอบเดิมซ้ำ', 'Blank = new unseen paper · Enter code = recreate exact test')) +
+          '</p>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="pt-4 border-t border-[var(--border)] flex flex-wrap items-center justify-between gap-4">' +
+        '<div class="text-xs text-[var(--muted-foreground)]">' +
+          '📊 ' + TInline(S('โจทย์ที่เคยสุ่มในเครื่องนี้แล้ว: ', 'Unique questions generated on this device: ')) + '<b>' + seenCount() + '</b> ข้อ' +
+        '</div>' +
+        '<button onclick="startTest()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-base shadow-md transition">' +
+          '🚀 ' + TInline(S('เริ่มทำแบบทดสอบ 25 ข้อ', 'Start 25-Question Test')) + ' →' +
+        '</button>' +
+      '</div>' +
+    '</section>' +
+  '</div>';
+
+  return html;
+}
+
+function startTest() {
+  playSound('click');
+  var seed = cfg.seed || randSeed(), useSeen = !cfg.seed;
+  var qs = genTest(seed, cfg.level, useSeen);
+  st = {
+    qs: qs,
+    seed: seed,
+    level: cfg.level,
+    mode: cfg.mode,
+    layout: cfg.layout,
+    user: [],
+    fin: [],
+    submitted: false,
+    end: (cfg.mode === 'exam' && cfg.timer) ? Date.now() + 75 * 60000 : 0
+  };
+  focusIdx = 0;
+  navOpen = false;
+  if (tmr) clearInterval(tmr);
+  if (st.end) { tmr = setInterval(tick, 1000); }
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function tick() {
+  if (!st || st.submitted) { clearInterval(tmr); return; }
+  var left = Math.max(0, st.end - Date.now()), el = document.getElementById('tm');
+  if (el) {
+    var m = Math.floor(left / 60000), s = Math.floor(left / 1000) % 60;
+    el.textContent = '⏱️ ' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    el.className = 'font-mono font-bold text-sm px-2.5 py-1 rounded-lg ' + (left < 5 * 60000 ? 'bg-rose-500/15 text-rose-500 animate-pulse' : 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400');
+  }
+  if (left <= 0) submitAll();
+}
+
+function isCorrect(i) {
+  var q = st.qs[i], u = st.user[i];
+  if (u === undefined || u === null || u === '') return false;
+  return q.type === 'mc' ? u === q.ai : String(u).trim() === String(q.a);
+}
+
+function answeredCount() {
+  var n = 0;
+  st.qs.forEach(function(q, i) {
+    var u = st.user[i];
+    if (u !== undefined && u !== null && u !== '') n++;
+  });
+  return n;
+}
+
+function scoreNow() {
+  var s = 0;
+  st.qs.forEach(function(q, i) {
+    if (st.fin[i] && isCorrect(i)) s += q.pts;
+  });
+  return s;
+}
+
+function copySeed() {
+  if (!st) return;
+  playSound('click');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(st.seed);
+  }
+  var btn = document.getElementById('copy-seed-btn');
+  if (btn) {
+    btn.textContent = '✓ คัดลอกแล้ว (' + st.seed + ')';
+    setTimeout(function() {
+      if (btn) btn.textContent = '📋 รหัส: ' + st.seed;
+    }, 1800);
+  }
+}
+
+function toggleLayoutMode() {
+  if (!st) return;
+  playSound('click');
+  st.layout = st.layout === 'all' ? 'focus' : 'all';
+  cfg.layout = st.layout;
+  render();
+}
+
+function toggleNavGrid() {
+  playSound('click');
+  navOpen = !navOpen;
+  render();
+}
+
+function jumpToQuestion(idx) {
+  playSound('click');
+  focusIdx = idx;
+  if (st.layout === 'focus') {
+    navOpen = false;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    var el = document.getElementById('qc' + idx);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function cardHTML(i) {
+  var q = st.qs[i], fin = st.fin[i], u = st.user[i], ok = fin && isCorrect(i);
+  var meta = TOPIC_META[q.topic] || { th: q.topic, en: q.topic, ic: '📌', color: '#4F46E5' };
+  var borderClass = fin ? (ok ? 'border-emerald-500 bg-emerald-500/5' : 'border-rose-500 bg-rose-500/5') : 'border-[var(--border)] bg-[var(--card)]';
+
+  var h = '<div class="qcard-print rounded-2xl border-2 ' + borderClass + ' p-4 sm:p-5 mb-3.5 shadow-sm transition" id="qc' + i + '">' +
+    '<div class="flex items-center justify-between flex-wrap gap-2 mb-3">' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-sm" style="background:' + (q.type === 'mc' ? '#2563EB' : '#7C3AED') + '">' + (i + 1) + '</span>' +
+        '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-[var(--background)] border border-[var(--border)]">' +
+          meta.ic + ' ' + meta[mode === 'en' ? 'en' : 'th'] +
+        '</span>' +
+        '<span class="text-xs text-[var(--muted-foreground)] font-medium">' +
+          (q.type === 'mc' ? (mode === 'en' ? 'Multiple Choice' : 'ปรนัย') : (mode === 'en' ? 'Short Answer' : 'เติมคำตอบ')) +
+        '</span>' +
+      '</div>' +
+      '<span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">' + q.pts + ' คะแนน (pts)</span>' +
+    '</div>' +
+
+    '<div class="text-base sm:text-lg font-bold mb-4 leading-snug">' + T(q.q) + '</div>';
+
+  if (q.type === 'mc') {
+    h += '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">';
+    q.opts.forEach(function(o, k) {
+      var btnStyle = 'border-[var(--border)] bg-[var(--background)] hover:border-indigo-500';
+      if (fin) {
+        if (k === q.ai) btnStyle = 'border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-extrabold';
+        else if (u === k) btnStyle = 'border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300';
+        else btnStyle = 'border-[var(--border)] bg-[var(--background)] opacity-55';
+      } else if (u === k) {
+        btnStyle = 'border-indigo-600 bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 ring-2 ring-indigo-500/20';
+      }
+      h += '<button type="button" ' + (fin ? 'disabled ' : '') + 'onclick="pickMC(' + i + ',' + k + ')" ' +
+        'class="opt-btn p-3 rounded-xl border-2 text-sm sm:text-base font-bold text-center ' + btnStyle + '">' +
+        '<span class="text-xs opacity-70 mr-1">(' + 'ABCD'.charAt(k) + ')</span> ' + o +
+      '</button>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="flex flex-wrap items-center gap-2.5">' +
+      '<input type="text" id="sa' + i + '" inputmode="numeric" ' + (fin ? 'disabled ' : '') +
+        'value="' + (u == null ? '' : u) + '" placeholder="' + (mode === 'en' ? 'Enter number...' : 'พิมพ์ตัวเลขคำตอบ...') + '" ' +
+        'oninput="saInput(' + i + ',this.value)" onkeydown="if(event.key===\'Enter\')saCheck(' + i + ')" ' +
+        'class="w-48 px-4 py-2.5 rounded-xl border-2 border-[var(--border)] bg-[var(--background)] text-lg font-black text-center focus:border-indigo-500 focus:outline-none">' +
+      (st.mode === 'practice' && !fin ? (
+        '<button type="button" onclick="saCheck(' + i + ')" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-sm">' +
+          (mode === 'en' ? 'Check Answer' : 'ตรวจคำตอบ') +
+        '</button>'
+      ) : '') +
+    '</div>';
+  }
+
+  if (fin) {
+    h += '<div class="mt-3.5 p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs sm:text-sm animate-pop">' +
+      '<div class="font-bold mb-0.5 ' + (ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') + '">' +
+        (ok ? (mode === 'en' ? '✓ Correct! (+' + q.pts + ' pts)' : '✓ ถูกต้อง! (+' + q.pts + ' คะแนน)')
+            : (mode === 'en' ? '✗ Correct Answer: ' : '✗ เฉลยคำตอบที่ถูกคือ: ') + q.a) +
+      '</div>' +
+      '<div class="text-[var(--muted-foreground)]">' + T(q.e) + '</div>' +
+    '</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function repaint(i) {
+  if (st.layout === 'focus') {
+    render();
+    return;
+  }
+  var el = document.getElementById('qc' + i);
+  if (el) el.outerHTML = cardHTML(i);
+}
+
+function pickMC(i, k) {
+  if (st.fin[i] || st.submitted) return;
+  st.user[i] = k;
+  if (st.mode === 'practice') {
+    st.fin[i] = true;
+    playSound(isCorrect(i) ? 'correct' : 'wrong');
+  } else {
+    playSound('click');
+  }
+  repaint(i);
+  updateStats();
+}
+
+function saInput(i, v) {
+  st.user[i] = v.trim();
+  updateStats();
+}
+
+function saCheck(i) {
+  if (st.fin[i] || st.submitted) return;
+  var el = document.getElementById('sa' + i);
+  if (el) st.user[i] = el.value.trim();
+  if (st.user[i] === '') return;
+  st.fin[i] = true;
+  playSound(isCorrect(i) ? 'correct' : 'wrong');
+  repaint(i);
+  updateStats();
+}
+
+function updateStats() {
+  var a = answeredCount(), el = document.getElementById('ans'), pg = document.getElementById('pg'), sc = document.getElementById('sc');
+  if (el) el.textContent = a + '/25';
+  if (pg) pg.style.width = Math.round(a / 25 * 100) + '%';
+  if (sc) sc.textContent = scoreNow();
+  if (st.mode === 'practice' && !st.submitted && st.fin.filter(Boolean).length === 25) {
+    submitAll();
+  }
+}
+
+function submitAll() {
+  if (st.submitted) return;
+  st.submitted = true;
+  if (tmr) clearInterval(tmr);
+  st.qs.forEach(function(q, i) { st.fin[i] = true; });
+  var total = scoreNow();
+  if (total >= 60) {
+    playSound('fanfare');
+    launchConfetti();
+  } else {
+    playSound('correct');
+  }
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resultHTML() {
+  var total = scoreNow(), right = 0, by = {};
+  st.qs.forEach(function(q, i) {
+    var ok = isCorrect(i);
+    if (ok) right++;
+    by[q.topic] = by[q.topic] || { c: 0, n: 0, ptsEarned: 0, ptsMax: 0 };
+    by[q.topic].n++;
+    by[q.topic].ptsMax += q.pts;
+    if (ok) {
+      by[q.topic].c++;
+      by[q.topic].ptsEarned += q.pts;
+    }
+  });
+
+  var msg = total >= 80
+    ? S('🏆 ยอดเยี่ยมมาก! พร้อมลงสนามสอบ SEAMO เลย!', '🏆 Outstanding! You are ready for SEAMO!')
+    : total >= 60
+    ? S('🌟 ทำได้ดีมาก! ทบทวนข้อที่พลาดอีกนิดจะสมบูรณ์แบบ', '🌟 Great work! Review a few missed items to reach the top.')
+    : total >= 40
+    ? S('💪 เริ่มต้นได้ดี! ดูตารางวิเคราะห์ด้านล่างแล้วกดทบทวนหัวข้อที่ยังอ่อนนะ', '💪 Good start! Check the topic breakdown below and review key lessons.')
+    : S('🌱 ไม่เป็นไรนะ! ค่อยๆ อ่านเฉลยทีละข้อและกดทบทวนบทเรียน', '🌱 Keep going! Read the step-by-step solutions and review the lessons.');
+
+  var h = '<div class="bg-[var(--card)] border-2 border-indigo-500/40 rounded-2xl p-6 text-center shadow-sm mb-5 animate-pop">' +
+    '<span class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">SEAMO Paper A · Grade ' + st.level + ' · Code: ' + st.seed + '</span>' +
+    '<h3 class="text-xl sm:text-2xl font-extrabold mt-3 mb-2">' + T(msg) + '</h3>' +
+    '<div class="text-5xl font-black text-indigo-600 dark:text-indigo-400 my-2">' + total + ' <span class="text-xl font-normal text-[var(--muted-foreground)]">/ 100</span></div>' +
+    '<p class="text-sm font-semibold text-[var(--muted-foreground)]">' + TInline(S('ตอบถูกทั้งหมด ' + right + ' จาก 25 ข้อ', 'Answered ' + right + ' out of 25 questions correctly')) + '</p>' +
+  '</div>';
+
+  h += '<div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm mb-5">' +
+    '<h3 class="font-bold text-base sm:text-lg mb-3">📊 ' + TInline(S('วิเคราะห์คะแนนรายหัวข้อ (กดปุ่มเพื่อกลับไปทบทวนบทเรียนได้ทันที)', 'Performance by Topic (Click to Review Lesson)')) + '</h3>' +
+    '<div class="space-y-3">';
+
+  Object.keys(by).forEach(function(k) {
+    var p = Math.round((by[k].c / by[k].n) * 100);
+    var meta = TOPIC_META[k] || { th: k, en: k, ic: '📌', color: '#4F46E5', idx: 0 };
+    h += '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-[var(--background)] border border-[var(--border)]">' +
+      '<div class="flex items-center gap-2 min-w-[180px]">' +
+        '<span>' + meta.ic + '</span>' +
+        '<span class="text-xs sm:text-sm font-bold">' + meta[mode === 'en' ? 'en' : 'th'] + '</span>' +
+      '</div>' +
+      '<div class="flex-1 flex items-center gap-3">' +
+        '<div class="w-full h-2.5 bg-[var(--card)] rounded-full overflow-hidden border border-[var(--border)]">' +
+          '<div class="h-full rounded-full transition-all" style="width:' + p + '%; background:' + (p >= 75 ? '#10B981' : p >= 50 ? '#F59E0B' : '#EF4444') + '"></div>' +
+        '</div>' +
+        '<span class="text-xs font-bold w-14 text-right">' + by[k].c + '/' + by[k].n + ' ข้อ</span>' +
+      '</div>' +
+      '<button onclick="jumpToTopicLesson(\'' + k + '\')" class="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)] text-xs font-semibold shrink-0">' +
+        '📖 ' + (mode === 'en' ? 'Review Lesson' : 'ทบทวนบทนี้') +
+      '</button>' +
+    '</div>';
+  });
+
+  h += '</div>' +
+    '<p class="text-xs text-[var(--muted-foreground)] mt-3">' +
+      TInline(S('หมายเหตุ: คะแนนและการวิเคราะห์นี้ใช้เพื่อการฝึกฝนและวางแผนทบทวนเท่านั้น', 'Note: Scores and analytics are for practice and study planning purposes.')) +
+    '</p>' +
+  '</div>';
+
+  h += '<div class="flex flex-wrap items-center justify-center gap-3 mb-6 no-print">' +
+    '<button onclick="newTest()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-sm">🎲 ' + TInline(S('สุ่มข้อสอบชุดใหม่', 'New Random Test')) + '</button>' +
+    '<button onclick="again()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-sm">🔄 ' + TInline(S('ทำชุดเดิมอีกครั้ง', 'Retake Same Test')) + '</button>' +
+    '<button onclick="window.print()" class="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)] font-semibold text-sm">🖨️ ' + TInline(S('พิมพ์กระดาษข้อสอบ/เฉลย', 'Print Paper')) + '</button>' +
+  '</div>';
+
+  return h;
+}
+
+function renderMockTest() {
+  var h = '';
+  if (st.submitted) h += resultHTML();
+
+  // Sticky Top Status & Controls Bar
+  h += '<div class="sticky top-2 z-20 mb-4 no-print">' +
+    '<div class="bg-[var(--card)]/95 backdrop-blur border-2 border-indigo-500/30 rounded-2xl p-3 sm:p-3.5 shadow-md flex flex-wrap items-center justify-between gap-2.5">' +
+      '<div class="flex items-center gap-2 flex-wrap">' +
+        '<button id="copy-seed-btn" onclick="copySeed()" title="คลิกเพื่อคัดลอกรหัสชุดข้อสอบ" class="px-2.5 py-1 rounded-lg bg-[var(--background)] border border-[var(--border)] text-xs font-mono font-bold hover:border-indigo-500">' +
+          '📋 รหัส: ' + st.seed +
+        '</button>' +
+        '<span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400">' +
+          'ป.' + st.level + ' · ' + (mode === 'en' ? 'Done ' : 'ตอบแล้ว ') + '<b id="ans">' + answeredCount() + '/25</b>' +
+        '</span>' +
+        (st.mode === 'practice' || st.submitted ? (
+          '<span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">' +
+            '★ ' + (mode === 'en' ? 'Score: ' : 'คะแนน: ') + '<b id="sc">' + scoreNow() + '</b>/100' +
+          '</span>'
+        ) : '') +
+        (st.end && !st.submitted ? '<span id="tm" class="font-mono font-bold text-sm px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">⏱️ 75:00</span>' : '') +
+      '</div>' +
+
+      '<div class="flex items-center gap-2">' +
+        '<button onclick="toggleNavGrid()" class="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] text-xs font-semibold">' +
+          '🔢 ' + (mode === 'en' ? 'Jump (1–25)' : 'เลือกข้อ (1–25)') +
+        '</button>' +
+        '<button onclick="toggleLayoutMode()" class="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)] text-xs font-semibold">' +
+          (st.layout === 'all' ? '🔍 ' + (mode === 'en' ? '1-by-1 View' : 'ดูทีละข้อ') : '📄 ' + (mode === 'en' ? 'Full Paper' : 'ดูทั้งฉบับ')) +
+        '</button>' +
+        (!st.submitted ? (
+          '<button onclick="submitAll()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm">' +
+            '✓ ' + (mode === 'en' ? 'Finish & Grade' : 'ส่งตรวจคะแนน') +
+          '</button>'
+        ) : '') +
+      '</div>' +
+    '</div>';
+
+  // Question Navigator Drawer (1 to 25)
+  if (navOpen) {
+    h += '<div class="mt-2 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-lg animate-pop">' +
+      '<div class="flex items-center justify-between mb-2">' +
+        '<span class="text-xs font-bold text-[var(--muted-foreground)]">คลิกหมายเลขข้อเพื่อข้ามไปยังข้อนั้นทันที:</span>' +
+        '<button onclick="toggleNavGrid()" class="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]">✕ ปิด</button>' +
+      '</div>' +
+      '<div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">' +
+        st.qs.map(function(q, idx) {
+          var u = st.user[idx];
+          var hasAns = u !== undefined && u !== null && u !== '';
+          var fin = st.fin[idx];
+          var ok = fin && isCorrect(idx);
+          var cls = 'border-[var(--border)] bg-[var(--background)]';
+          if (fin) cls = ok ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-rose-600 text-white border-rose-600';
+          else if (hasAns) cls = 'bg-indigo-600 text-white border-indigo-600';
+          return '<button onclick="jumpToQuestion(' + idx + ')" class="h-8 rounded-lg border text-xs font-bold ' + cls + '">' + (idx + 1) + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
+  h += '</div>';
+
+  // Focus Mode (1 Question at a time) vs Full Paper Mode (All 25 Questions)
+  if (st.layout === 'focus') {
+    var secTitle = focusIdx < 10
+      ? S('ส่วนที่ 1 · ปรนัย ข้อ 1–10 (ข้อละ 3 คะแนน)', 'Part 1 · Multiple Choice Q1–10 (3 pts each)')
+      : focusIdx < 20
+      ? S('ส่วนที่ 2 · ปรนัย ข้อ 11–20 (ข้อละ 4 คะแนน)', 'Part 2 · Multiple Choice Q11–20 (4 pts each)')
+      : S('ส่วนที่ 3 · ตอบสั้น ข้อ 21–25 (ข้อละ 6 คะแนน)', 'Part 3 · Short Answer Q21–25 (6 pts each)');
+
+    h += '<div class="mb-2 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">' + TInline(secTitle) + '</div>';
+    h += cardHTML(focusIdx);
+    h += '<div class="flex items-center justify-between gap-3 mt-4 no-print">' +
+      '<button onclick="if(focusIdx>0){focusIdx--;render();}" ' + (focusIdx === 0 ? 'disabled ' : '') +
+        'class="px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] font-bold text-sm disabled:opacity-40">← ข้อก่อนหน้า</button>' +
+      '<span class="text-xs font-bold text-[var(--muted-foreground)]">ข้อที่ ' + (focusIdx + 1) + ' / 25</span>' +
+      (focusIdx < 24 ? (
+        '<button onclick="focusIdx++;render();" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm">ข้อถัดไป →</button>'
+      ) : (
+        !st.submitted ? '<button onclick="submitAll()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm">ส่งข้อสอบและดูผล 🏆</button>' : '<span></span>'
+      )) +
+    '</div>';
+  } else {
+    for (var i = 0; i < 25; i++) {
+      if (i === 0) h += '<div class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-[var(--border)] pb-2 mb-3 mt-4">📘 ' + TInline(S('ส่วนที่ 1 · ปรนัย ข้อ 1–10 (ข้อละ 3 คะแนน · รวม 30 คะแนน)', 'Part 1 · Multiple Choice Q1–10 (3 pts each · 30 pts)')) + '</div>';
+      if (i === 10) h += '<div class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-[var(--border)] pb-2 mb-3 mt-6">📙 ' + TInline(S('ส่วนที่ 2 · ปรนัย ข้อ 11–20 (ข้อละ 4 คะแนน · รวม 40 คะแนน)', 'Part 2 · Multiple Choice Q11–20 (4 pts each · 40 pts)')) + '</div>';
+      if (i === 20) h += '<div class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 border-b border-[var(--border)] pb-2 mb-3 mt-6">🏅 ' + TInline(S('ส่วนที่ 3 · เติมคำตอบสั้น ข้อ 21–25 (ข้อละ 6 คะแนน · รวม 30 คะแนน)', 'Part 3 · Short Answer Q21–25 (6 pts each · 30 pts)')) + '</div>';
+      h += cardHTML(i);
+    }
+  }
+
+  if (!st.submitted) {
+    h += '<div class="flex flex-wrap items-center justify-center gap-3 mt-6 pt-4 border-t border-[var(--border)] no-print">' +
+      '<button onclick="submitAll()" class="px-7 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm sm:text-base shadow-md">🏆 ' + TInline(S('ส่งข้อสอบและตรวจคะแนนทั้งหมด', 'Submit & Grade All 25 Questions')) + '</button>' +
+      '<button onclick="newTest()" class="px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)] font-semibold text-sm">⚙️ ' + TInline(S('กลับหน้าตั้งค่าข้อสอบ', 'Back to Test Settings')) + '</button>' +
+    '</div>';
+  }
+
+  return h;
+}
+
+function newTest() {
+  playSound('click');
+  if (tmr) clearInterval(tmr);
+  st = null;
+  cfg.seed = '';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function again() {
+  playSound('click');
+  cfg.seed = st.seed;
+  cfg.level = st.level;
+  cfg.mode = st.mode;
+  startTest();
+}
+
+/* ============================================================================
+   MAIN RENDER DISPATCHER
+   ============================================================================ */
+function render() {
+  var appEl = document.getElementById('app');
+  if (!appEl) return;
+  if (portal === 'mock') {
+    appEl.innerHTML = st ? renderMockTest() : renderMockSetup();
+  } else {
+    appEl.innerHTML = view === 'home' ? homeView()
+                    : view === 'lesson' ? lessonView()
+                    : view === 'quiz' ? quizView()
+                    : view === 'result' ? resultView()
+                    : view === 'short' ? shortQView()
+                    : shortResView();
+  }
+}
+
+renderHeaderTabs();
+render();
+</script>
+</body>
+</html>
